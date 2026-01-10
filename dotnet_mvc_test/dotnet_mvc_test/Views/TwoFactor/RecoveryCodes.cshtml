@@ -1,0 +1,31 @@
+@model dotnet_mvc_test.Models.ViewModels.TwoFactor.RecoveryCodesViewModel
+@{
+    ViewData["Title"] = "リカバリーコード";
+}
+
+<h2>リカバリーコード</h2>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="alert alert-warning">
+            <strong>重要:</strong> これらのリカバリーコードを安全な場所に保存してください。認証アプリにアクセスできなくなった場合に使用できます。各コードは1回のみ使用可能です。
+        </div>
+        
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    @foreach (var code in Model.RecoveryCodes)
+                    {
+                        <div class="col-6 col-md-4 mb-2">
+                            <code>@code</code>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <a asp-controller="Home" asp-action="Index" class="btn btn-primary">完了</a>
+        </div>
+    </div>
+</div>

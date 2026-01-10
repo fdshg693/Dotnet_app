@@ -1,0 +1,36 @@
+@model dotnet_mvc_test.Models.ViewModels.TwoFactor.VerifyRecoveryCodeViewModel
+@{
+    ViewData["Title"] = "リカバリーコードでログイン";
+}
+
+<h2>リカバリーコードでログイン</h2>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <p>保存していたリカバリーコードを入力してください。</p>
+                
+                <form asp-action="VerifyRecoveryCode" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <input type="hidden" asp-for="ReturnUrl" />
+                    <div class="mb-3">
+                        <label asp-for="RecoveryCode" class="form-label">リカバリーコード</label>
+                        <input asp-for="RecoveryCode" class="form-control" style="max-width: 300px;" autocomplete="off" />
+                        <span asp-validation-for="RecoveryCode" class="text-danger"></span>
+                    </div>
+                    <button type="submit" class="btn btn-primary">ログイン</button>
+                </form>
+                
+                <hr />
+                <p>
+                    <a asp-action="Verify" asp-route-returnUrl="@Model.ReturnUrl">認証アプリのコードを使用</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

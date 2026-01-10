@@ -1,0 +1,173 @@
+::deep .game-setup {
+    margin-bottom: 20px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+}
+
+::deep .player-count-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+::deep .player-count-control label {
+    font-weight: 600;
+    margin: 0;
+}
+
+::deep .player-count-control select {
+    padding: 5px 10px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    font-size: 14px;
+}
+
+::deep .choices {
+    display: flex;
+    gap: 10px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+}
+
+::deep .choices button {
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: 600;
+    border: none;
+    border-radius: 5px;
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+::deep .choices button:hover {
+    background-color: #0056b3;
+}
+
+::deep .result {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #e7f3ff;
+    border-left: 4px solid #2196F3;
+    border-radius: 5px;
+}
+
+::deep .hands-display {
+    margin-bottom: 15px;
+}
+
+::deep .hands-display h4 {
+    margin: 10px 0;
+    color: #333;
+}
+
+::deep .player-hand {
+    padding: 8px;
+    margin: 5px 0;
+    background-color: white;
+    border-radius: 3px;
+    border-left: 3px solid #2196F3;
+}
+
+::deep .player-hand strong {
+    color: #1976D2;
+}
+
+::deep .game-result {
+    margin: 15px 0;
+}
+
+::deep .outcome-message {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1976D2;
+    margin: 10px 0;
+}
+
+::deep .winners {
+    font-size: 16px;
+    color: #4CAF50;
+    margin: 10px 0;
+}
+
+::deep .result button {
+    padding: 10px 20px;
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background-color 0.3s;
+}
+
+::deep .result button:hover {
+    background-color: #5a6268;
+}
+
+::deep .score-board {
+    margin-top: 30px;
+    padding: 15px;
+    background-color: #fff9e6;
+    border-radius: 5px;
+}
+
+::deep .score-board h4 {
+    color: #333;
+    margin-top: 0;
+}
+
+::deep .score-board .table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0;
+}
+
+::deep .score-board th,
+::deep .score-board td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+::deep .score-board th {
+    background-color: #FFD700;
+    font-weight: 600;
+    color: #333;
+}
+
+::deep .score-board tr:hover {
+    background-color: #fffacd;
+}
+
+::deep .history {
+    margin-top: 30px;
+    padding: 15px;
+    background-color: #f0f0f0;
+    border-radius: 5px;
+}
+
+::deep .history h4 {
+    color: #333;
+    margin-top: 0;
+}
+
+::deep .history ul {
+    list-style: none;
+    padding: 0;
+}
+
+::deep .history li {
+    padding: 10px;
+    margin: 8px 0;
+    background-color: white;
+    border-left: 3px solid #999;
+    border-radius: 3px;
+    font-size: 14px;
+}
+
+::deep .history span {
+    margin-right: 5px;
+}

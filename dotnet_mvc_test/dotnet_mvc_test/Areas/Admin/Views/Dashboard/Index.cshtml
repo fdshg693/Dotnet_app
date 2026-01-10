@@ -1,0 +1,146 @@
+@model dotnet_mvc_test.Models.ViewModels.Admin.DashboardViewModel
+
+@{
+    ViewData["Title"] = "管理ダッシュボード";
+}
+
+<div class="container mt-4">
+    <h1 class="mb-4">管理ダッシュボード</h1>
+
+    <!-- 統計情報カード -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <h5 class="card-title">記事</h5>
+                    <h2 class="mb-0">@Model.TotalArticles</h2>
+                    <small>公開: @Model.PublishedArticles / 下書き: @Model.DraftArticles</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <h5 class="card-title">コメント</h5>
+                    <h2 class="mb-0">@Model.TotalComments</h2>
+                    <small>全コメント数</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <h5 class="card-title">カテゴリー / タグ</h5>
+                    <h2 class="mb-0">@Model.TotalCategories / @Model.TotalTags</h2>
+                    <small>カテゴリー数 / タグ数</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- 最近の記事 -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">最近の記事</h5>
+                    <a asp-area="Admin" asp-controller="Article" asp-action="Index" class="btn btn-sm btn-primary">すべて見る</a>
+                </div>
+                <div class="card-body p-0">
+                    @if (Model.RecentArticles.Any())
+                    {
+                        <div class="list-group list-group-flush">
+                            @foreach (var article in Model.RecentArticles)
+                            {
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1">
+                                                <a asp-area="Admin" asp-controller="Article" asp-action="Detail" asp-route-id="@article.Id">
+                                                    @article.Title
+                                                </a>
+                                            </h6>
+                                            <small class="text-muted">
+                                                <i class="bi bi-person"></i> @article.AuthorName |
+                                                <i class="bi bi-folder"></i> @article.CategoryName |
+                                                <i class="bi bi-calendar"></i> @article.CreatedAt.ToString("yyyy/MM/dd HH:mm")
+                                            </small>
+                                        </div>
+                                        <span class="badge @(article.IsPublished ? "bg-success" : "bg-secondary")">
+                                            @(article.IsPublished ? "公開" : "下書き")
+                                        </span>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="p-3 text-center text-muted">
+                            記事がありません
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- 最近のコメント -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">最近のコメント</h5>
+                </div>
+                <div class="card-body p-0">
+                    @if (Model.RecentComments.Any())
+                    {
+                        <div class="list-group list-group-flush">
+                            @foreach (var comment in Model.RecentComments)
+                            {
+                                <div class="list-group-item">
+                                    <div class="mb-2">
+                                        <p class="mb-1">@comment.Content</p>
+                                        <small class="text-muted">
+                                            <i class="bi bi-person"></i> @comment.AuthorName |
+                                            <i class="bi bi-file-text"></i> @comment.ArticleTitle |
+                                            <i class="bi bi-calendar"></i> @comment.CreatedAt.ToString("yyyy/MM/dd HH:mm")
+                                        </small>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="p-3 text-center text-muted">
+                            コメントがありません
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- クイックアクション -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">クイックアクション</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a asp-area="Admin" asp-controller="Article" asp-action="Create" class="btn btn-primary">
+                            <i class="bi bi-plus-circle"></i> 新規記事作成
+                        </a>
+                        <a asp-area="Admin" asp-controller="Article" asp-action="Index" class="btn btn-outline-primary">
+                            <i class="bi bi-list"></i> 記事一覧
+                        </a>
+                        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary" target="_blank">
+                            <i class="bi bi-eye"></i> サイトを表示
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

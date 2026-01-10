@@ -1,0 +1,144 @@
+﻿@page "/"
+@rendermode InteractiveServer
+@using foodStoreSimulate.Components.Services.Entities;
+@using foodStoreSimulate.Components.Services;
+@inject RestaurantService Restaurant
+@inject TextLogger Logger
+@inject UIStateService UIState
+
+<button @onclick="AddCustomer">来店</button>
+<select @bind="SelectedValue">
+    <option value=0>選択してください</option>
+    <option value=1>カレー</option>
+    <option value=2>ラーメン</option>
+    <option value=3>焼きそば</option>
+</select>
+<button @onclick="StartCooking">調理する</button>
+
+<h3>現在時刻: @DateTime.Now.ToString("HH:mm:ss")</h3>
+<p>顧客数: @Restaurant.Customers.Count</p>
+<p>調理済食品数: @Restaurant.Foods.Count</p>
+<p>廃棄済食品数: @Restaurant.Garbages.Count</p>
+
+<p>調理ステータス</p>
+@if (UIState.IsCooking)
+{
+    <p>調理中</p>
+} else {
+    <p>待機中</p>
+}
+<table>
+    <caption>
+        顧客行列
+    </caption>
+    <thead>
+        <tr>
+            <th scope="col">Name</th>
+            <th scope="col">CreatedAt</th>
+            <th scope="col">WaitingTime</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var customer in Restaurant.Customers)
+        {
+            <tr>
+                <th scope="row">@customer.Name</th>
+                <td>@customer.CreatedAt.ToString(@"h\:mm\:ss")</td>
+                <td>@customer.GetWaitingTime(DateTime.Now).ToString(@"m\:ss")</td>
+            </tr>
+        }
+    </tbody>    
+</table>
+<table>
+    <caption>
+        調理済食品
+    </caption>
+    <thead>
+        <tr>
+            <th scope="col">DishName</th>
+            <th scope="col">CreatedAt</th>
+            <th scope="col">ExpiredAt</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var cookedFood in Restaurant.Foods)
+        {
+            <tr>
+                <th scope="row">@cookedFood.MenuItem.Food.DishName</th>
+                <td>
+                    @cookedFood.MenuItem.Food.CreatedAt.ToString(@"HH\:mm\:ss")
+                </td>
+                <td>
+                    @cookedFood.MenuItem.Food.ExpiredAt.ToString(@"HH\:mm\:ss")
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+<table>
+    <caption>
+        廃棄済食品
+    </caption>
+    <thead>
+        <tr>
+            <th scope="col">DishName</th>
+            <th scope="col">CreatedAt</th>
+            <th scope="col">ExpiredAt</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var garbage in Restaurant.Garbages)
+        {
+            <tr>
+                <th scope="row">@garbage.DishName</th>
+                <td>
+                    @garbage.DishName
+                </td>
+                <td>
+                    @garbage.ExpiredAt.ToString(@"HH\:mm\:ss")
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<textarea rows="15" cols="50" readonly>@((Logger as TextLogger)?.LogText)</textarea>
+
+@code {
+    private const int refreshSpanMille = 2000;
+    private string SelectedValue { get; set; } = "";
+    private void AddCustomer()
+    {
+        Restaurant.EnqueueCustomer();
+    }
+
+    private async Task StartCooking()
+    {
+        int number;
+        bool success = int.TryParse(SelectedValue, out number);
+        if (success)
+        {
+            await Restaurant.CookAsync(number);
+        } else {
+            await Task.CompletedTask;
+        }        
+    }
+
+    private System.Threading.Timer? _timer;
+
+    protected override void OnInitialized()
+    {
+        _timer = new System.Threading.Timer(UpdateEvent, null, 0, refreshSpanMille);
+    }
+
+    private void UpdateEvent(object? state)
+    {
+        InvokeAsync(StateHasChanged);
+        Restaurant.DisposeExpiredFood();
+    }
+
+    public void Dispose()
+    {
+        _timer?.Dispose();
+    }
+}

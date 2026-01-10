@@ -1,0 +1,40 @@
+@model dotnet_mvc_test.Models.ViewModels.TwoFactor.VerifyTwoFactorViewModel
+@{
+    ViewData["Title"] = "2段階認証";
+}
+
+<h2>2段階認証</h2>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <p>認証アプリに表示されている6桁のコードを入力してください。</p>
+                
+                <form asp-action="Verify" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <input type="hidden" asp-for="ReturnUrl" />
+                    <div class="mb-3">
+                        <label asp-for="Code" class="form-label">確認コード</label>
+                        <input asp-for="Code" class="form-control" style="max-width: 200px;" autocomplete="off" />
+                        <span asp-validation-for="Code" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input asp-for="RememberMe" class="form-check-input" />
+                        <label asp-for="RememberMe" class="form-check-label">このブラウザを記憶する</label>
+                    </div>
+                    <button type="submit" class="btn btn-primary">ログイン</button>
+                </form>
+                
+                <hr />
+                <p>
+                    <a asp-action="VerifyRecoveryCode" asp-route-returnUrl="@Model.ReturnUrl">リカバリーコードを使用</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

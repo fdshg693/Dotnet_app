@@ -1,0 +1,120 @@
+@model dotnet_mvc_test.Models.ViewModels.Admin.ArticleDetailViewModel
+@{
+    ViewData["Title"] = "記事詳細";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>記事詳細</h2>
+        <div>
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">
+                <i class="bi bi-pencil"></i> 編集
+            </a>
+            <a asp-action="Index" class="btn btn-secondary">一覧に戻る</a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                @if (!string.IsNullOrEmpty(Model.FeaturedImageUrl))
+                {
+                    <img src="@Model.FeaturedImageUrl" class="card-img-top" alt="@Model.Title">
+                }
+                <div class="card-body">
+                    <h1 class="card-title">@Model.Title</h1>
+                    
+                    <div class="mb-3">
+                        <small class="text-muted">
+                            <i class="bi bi-person"></i> @Model.AuthorName
+                            <i class="bi bi-calendar ms-3"></i> @Model.CreatedAt.ToString("yyyy/MM/dd HH:mm")
+                            @if (Model.PublishedAt.HasValue)
+                            {
+                                <i class="bi bi-eye ms-3"></i> @Model.PublishedAt.Value.ToString("yyyy/MM/dd HH:mm")
+                            }
+                        </small>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(Model.Excerpt))
+                    {
+                        <div class="alert alert-light">
+                            <strong>抜粋:</strong> @Model.Excerpt
+                        </div>
+                    }
+
+                    <hr>
+
+                    <div class="article-content">
+                        @Html.Raw(Model.Content)
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">情報</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="mb-0">
+                        <dt>ステータス</dt>
+                        <dd>
+                            @if (Model.IsPublished)
+                            {
+                                <span class="badge bg-success">公開</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning">下書き</span>
+                            }
+                        </dd>
+
+                        <dt>スラッグ</dt>
+                        <dd><code>@Model.Slug</code></dd>
+
+                        <dt>カテゴリ</dt>
+                        <dd>@(Model.CategoryName ?? "なし")</dd>
+
+                        <dt>タグ</dt>
+                        <dd>
+                            @if (Model.Tags.Any())
+                            {
+                                @foreach (var tag in Model.Tags)
+                                {
+                                    <span class="badge bg-secondary me-1">@tag</span>
+                                }
+                            }
+                            else
+                            {
+                                <span class="text-muted">なし</span>
+                            }
+                        </dd>
+
+                        <dt>コメント数</dt>
+                        <dd>@Model.CommentCount</dd>
+
+                        <dt>最終更新</dt>
+                        <dd>@Model.UpdatedAt.ToString("yyyy/MM/dd HH:mm")</dd>
+                    </dl>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">操作</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">
+                            <i class="bi bi-pencil"></i> 編集
+                        </a>
+                        <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-danger">
+                            <i class="bi bi-trash"></i> 削除
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

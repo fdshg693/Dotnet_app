@@ -1,0 +1,38 @@
+@model dotnet_mvc_test.Models.ViewModels.TwoFactor.SetupTwoFactorViewModel
+@{
+    ViewData["Title"] = "2段階認証の設定";
+}
+
+<h2>2段階認証の設定</h2>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">1. 認証アプリをインストール</h5>
+                <p class="card-text">Google Authenticator または Microsoft Authenticator をスマートフォンにインストールしてください。</p>
+                
+                <h5 class="card-title mt-4">2. QRコードをスキャン</h5>
+                <div class="text-center my-3">
+                    <img src="@Model.QrCodeDataUri" alt="QRコード" style="width: 200px; height: 200px;" />
+                </div>
+                <p class="text-muted text-center">手動入力用キー: <code>@Model.SharedKey</code></p>
+                
+                <h5 class="card-title mt-4">3. 確認コードを入力</h5>
+                <form asp-action="Setup" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <div class="mb-3">
+                        <label asp-for="Code" class="form-label">認証アプリに表示されている6桁のコード</label>
+                        <input asp-for="Code" class="form-control" style="max-width: 200px;" autocomplete="off" />
+                        <span asp-validation-for="Code" class="text-danger"></span>
+                    </div>
+                    <button type="submit" class="btn btn-primary">確認して有効化</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

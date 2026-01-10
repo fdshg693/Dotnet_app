@@ -1,0 +1,123 @@
+@model dotnet_mvc_test.Models.ViewModels.Admin.ArticleListViewModel
+@{
+    ViewData["Title"] = "記事管理";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>記事管理</h2>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> 新規作成
+        </a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>タイトル</th>
+                            <th>カテゴリ</th>
+                            <th>タグ</th>
+                            <th>著者</th>
+                            <th>ステータス</th>
+                            <th>作成日</th>
+                            <th>公開日</th>
+                            <th>コメント</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Articles.Any())
+                        {
+                            <tr>
+                                <td colspan="9" class="text-center">記事がありません</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var article in Model.Articles)
+                            {
+                                <tr>
+                                    <td>
+                                        <a asp-action="Detail" asp-route-id="@article.Id">
+                                            @article.Title
+                                        </a>
+                                        <br>
+                                        <small class="text-muted">/@article.Slug</small>
+                                    </td>
+                                    <td>@(article.CategoryName ?? "-")</td>
+                                    <td>
+                                        @if (article.Tags.Any())
+                                        {
+                                            @foreach (var tag in article.Tags)
+                                            {
+                                                <span class="badge bg-secondary me-1">@tag</span>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td>@article.AuthorName</td>
+                                    <td>
+                                        @if (article.IsPublished)
+                                        {
+                                            <span class="badge bg-success">公開</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning">下書き</span>
+                                        }
+                                    </td>
+                                    <td>@article.CreatedAt.ToString("yyyy/MM/dd")</td>
+                                    <td>@(article.PublishedAt?.ToString("yyyy/MM/dd") ?? "-")</td>
+                                    <td>
+                                        @if (article.CommentCount > 0)
+                                        {
+                                            <span class="badge bg-info">@article.CommentCount</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">0</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a asp-action="Edit" asp-route-id="@article.Id" 
+                                               class="btn btn-sm btn-outline-primary" title="編集">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <a asp-action="Delete" asp-route-id="@article.Id" 
+                                               class="btn btn-sm btn-outline-danger" title="削除">
+                                                <i class="bi bi-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

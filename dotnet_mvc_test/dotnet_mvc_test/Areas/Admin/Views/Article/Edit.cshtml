@@ -1,0 +1,135 @@
+@model dotnet_mvc_test.Models.ViewModels.Admin.ArticleEditViewModel
+@{
+    ViewData["Title"] = "記事編集";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>記事編集</h2>
+        <a asp-action="Index" class="btn btn-secondary">一覧に戻る</a>
+    </div>
+
+    <form asp-action="Edit" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+        <input type="hidden" asp-for="CreatedAt" />
+        <input type="hidden" asp-for="PublishedAt" />
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label asp-for="Title" class="form-label">タイトル</label>
+                            <input asp-for="Title" class="form-control" />
+                            <span asp-validation-for="Title" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Slug" class="form-label">スラッグ</label>
+                            <input asp-for="Slug" class="form-control" />
+                            <div class="form-text">URL用の識別子（半角英数字とハイフンのみ）例: my-first-post</div>
+                            <span asp-validation-for="Slug" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Content" class="form-label">本文（Markdown）</label>
+                            <textarea asp-for="Content" class="form-control" rows="20"></textarea>
+                            <span asp-validation-for="Content" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Excerpt" class="form-label">抜粋</label>
+                            <textarea asp-for="Excerpt" class="form-control" rows="3"></textarea>
+                            <div class="form-text">記事一覧で表示される概要文</div>
+                            <span asp-validation-for="Excerpt" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">公開設定</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <small class="text-muted">
+                                作成日: @Model.CreatedAt.ToString("yyyy/MM/dd HH:mm")
+                            </small>
+                            @if (Model.PublishedAt.HasValue)
+                            {
+                                <br>
+                                <small class="text-muted">
+                                    公開日: @Model.PublishedAt.Value.ToString("yyyy/MM/dd HH:mm")
+                                </small>
+                            }
+                        </div>
+
+                        <div class="form-check mb-3">
+                            <input asp-for="IsPublished" class="form-check-input" type="checkbox" />
+                            <label asp-for="IsPublished" class="form-check-label">
+                                公開する
+                            </label>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save"></i> 更新
+                            </button>
+                            <a asp-action="Index" class="btn btn-outline-secondary">キャンセル</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">カテゴリ</h5>
+                    </div>
+                    <div class="card-body">
+                        <select asp-for="CategoryId" class="form-select" asp-items="ViewBag.Categories">
+                            <option value="">カテゴリなし</option>
+                        </select>
+                        <span asp-validation-for="CategoryId" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">タグ</h5>
+                    </div>
+                    <div class="card-body">
+                        <select asp-for="SelectedTagIds" class="form-select" asp-items="ViewBag.Tags" multiple size="5">
+                        </select>
+                        <div class="form-text">Ctrl+クリックで複数選択</div>
+                        <span asp-validation-for="SelectedTagIds" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">アイキャッチ画像</h5>
+                    </div>
+                    <div class="card-body">
+                        <input asp-for="FeaturedImageUrl" class="form-control" placeholder="https://example.com/image.jpg" />
+                        <div class="form-text">画像のURLを入力</div>
+                        <span asp-validation-for="FeaturedImageUrl" class="text-danger"></span>
+                        
+                        @if (!string.IsNullOrEmpty(Model.FeaturedImageUrl))
+                        {
+                            <div class="mt-2">
+                                <img src="@Model.FeaturedImageUrl" alt="Featured Image" class="img-fluid" style="max-height: 200px;" />
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

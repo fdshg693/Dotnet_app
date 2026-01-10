@@ -1,0 +1,227 @@
+@page "/janken-challenge"
+@using JankenGame.Models.Janken
+@using JankenGame.Services.Janken
+@rendermode InteractiveServer
+
+<PageTitle>じゃんけんチャレンジ</PageTitle>
+
+<div class="challenge-container">
+    <h3>じゃんけんチャレンジ 🎯</h3>
+    <p class="description">コンピューターの手に勝つ手を選んでください！</p>
+
+    @if (!game.IsPlaying)
+    {
+        <div class="start-screen">
+            <div class="rules">
+                <h4>ルール</h4>
+                <ul>
+                    <li>コンピューターが出した手に対して、勝つ手を選びます</li>
+                    <li>正解すると <strong>+10ポイント</strong></li>
+                    <li>不正解だと <strong>-5ポイント</strong></li>
+                    <li>何回でも挑戦できます！</li>
+                </ul>
+            </div>
+            <button class="btn-start" @onclick="StartGame">ゲームスタート</button>
+
+            @if (game.PlayCount > 0)
+            {
+                <div class="final-result">
+                    <h4>最終結果</h4>
+                    <div class="result-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">最終スコア</span>
+                            <span class="stat-value score">@game.Score</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">プレイ回数</span>
+                            <span class="stat-value">@game.PlayCount</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">正解</span>
+                            <span class="stat-value correct">@game.CorrectCount</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">不正解</span>
+                            <span class="stat-value wrong">@game.WrongCount</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">正解率</span>
+                            <span class="stat-value">@game.GetAccuracyRate().ToString("F1")%</span>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="game-screen">
+            <div class="score-board">
+                <div class="score-item">
+                    <span class="label">スコア</span>
+                    <span class="value">@game.Score</span>
+                </div>
+                <div class="score-item">
+                    <span class="label">プレイ回数</span>
+                    <span class="value">@game.PlayCount</span>
+                </div>
+                <div class="score-item">
+                    <span class="label">正解率</span>
+                    <span class="value">@game.GetAccuracyRate().ToString("F1")%</span>
+                </div>
+            </div>
+
+            @if (game.ComputerHand == null)
+            {
+                <div class="question-area">
+                    <p class="instruction">準備はいいですか？</p>
+                    <button class="btn-next" @onclick="GenerateNewChallenge">次の問題</button>
+                </div>
+            }
+            else if (showResult)
+            {
+                <div class="answer-area">
+                    <div class="computer-hand">
+                        <p class="label">コンピューターの手</p>
+                        <p class="hand-display">@GetHandEmoji(game.ComputerHand.Value) @game.ComputerHand.Value.GetDescription()</p>
+                    </div>
+
+                    @if (isCorrect)
+                    {
+                        <div class="result-message correct">
+                            <p class="emoji">🎉</p>
+                            <p class="message">正解！ +10ポイント</p>
+                            <p class="detail">あなたの答え: @(playerSelectedHand?.GetDescription() ?? "")</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="result-message wrong">
+                            <p class="emoji">😢</p>
+                            <p class="message">不正解... -5ポイント</p>
+                            <p class="detail">あなたの答え: @(playerSelectedHand?.GetDescription() ?? "")</p>
+                            <p class="detail">正解は: @challengeService.GetWinningHand(game.ComputerHand.Value).GetDescription()</p>
+                        </div>
+                    }
+
+                    <button class="btn-next" @onclick="NextChallenge">次の問題</button>
+                </div>
+            }
+            else
+            {
+                <div class="question-area">
+                    <div class="computer-hand">
+                        <p class="label">コンピューターの手</p>
+                        <p class="hand-display">@GetHandEmoji(game.ComputerHand.Value) @game.ComputerHand.Value.GetDescription()</p>
+                    </div>
+
+                    <p class="instruction">勝つ手を選んでください！</p>
+
+                    <div class="choices">
+                        <button class="btn-choice" @onclick="() => SelectHand(JankenHand.Rock)">
+                            <span class="emoji">✊</span>
+                            <span class="label">グー</span>
+                        </button>
+                        <button class="btn-choice" @onclick="() => SelectHand(JankenHand.Paper)">
+                            <span class="emoji">✋</span>
+                            <span class="label">パー</span>
+                        </button>
+                        <button class="btn-choice" @onclick="() => SelectHand(JankenHand.Scissors)">
+                            <span class="emoji">✌️</span>
+                            <span class="label">チョキ</span>
+                        </button>
+                    </div>
+                </div>
+            }
+
+            <div class="game-controls">
+                <button class="btn-end" @onclick="EndGame">ゲーム終了</button>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private JankenChallengeGame game = new();
+    private JankenChallengeService challengeService = new();
+    private bool showResult = false;
+    private bool isCorrect = false;
+    private JankenHand? playerSelectedHand = null;
+
+    /// <summary>
+    /// ゲームを開始する
+    /// </summary>
+    private void StartGame()
+    {
+        game.StartGame();
+        showResult = false;
+        playerSelectedHand = null;
+    }
+
+    /// <summary>
+    /// 新しいチャレンジを生成する
+    /// </summary>
+    private void GenerateNewChallenge()
+    {
+        var computerHand = challengeService.GenerateComputerHand();
+        game.SetComputerHand(computerHand);
+        showResult = false;
+        playerSelectedHand = null;
+    }
+
+    /// <summary>
+    /// プレイヤーが手を選択したときの処理
+    /// </summary>
+    /// <param name="hand">選択した手</param>
+    private void SelectHand(JankenHand hand)
+    {
+        if (game.ComputerHand == null) return;
+
+        playerSelectedHand = hand;
+        isCorrect = challengeService.IsCorrectAnswer(hand, game.ComputerHand.Value);
+
+        if (isCorrect)
+        {
+            game.OnCorrectAnswer();
+        }
+        else
+        {
+            game.OnWrongAnswer();
+        }
+
+        showResult = true;
+    }
+
+    /// <summary>
+    /// 次のチャレンジに進む
+    /// </summary>
+    private void NextChallenge()
+    {
+        GenerateNewChallenge();
+    }
+
+    /// <summary>
+    /// ゲームを終了する
+    /// </summary>
+    private void EndGame()
+    {
+        game.EndGame();
+        showResult = false;
+    }
+
+    /// <summary>
+    /// 手に対応する絵文字を取得する
+    /// </summary>
+    /// <param name="hand">手</param>
+    /// <returns>絵文字</returns>
+    private string GetHandEmoji(JankenHand hand)
+    {
+        return hand switch
+        {
+            JankenHand.Rock => "✊",
+            JankenHand.Paper => "✋",
+            JankenHand.Scissors => "✌️",
+            _ => ""
+        };
+    }
+}

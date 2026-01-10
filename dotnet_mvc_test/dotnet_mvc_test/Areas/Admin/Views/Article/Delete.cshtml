@@ -1,0 +1,88 @@
+@model dotnet_mvc_test.Models.ViewModels.Admin.ArticleDetailViewModel
+@{
+    ViewData["Title"] = "記事削除確認";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>記事削除確認</h2>
+        <a asp-action="Index" class="btn btn-secondary">一覧に戻る</a>
+    </div>
+
+    <div class="alert alert-danger">
+        <h4 class="alert-heading">
+            <i class="bi bi-exclamation-triangle"></i> 削除の確認
+        </h4>
+        <p>この記事を削除してもよろしいですか？この操作は元に戻せません。</p>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-3">タイトル</dt>
+                <dd class="col-sm-9">@Model.Title</dd>
+
+                <dt class="col-sm-3">スラッグ</dt>
+                <dd class="col-sm-9">@Model.Slug</dd>
+
+                <dt class="col-sm-3">カテゴリ</dt>
+                <dd class="col-sm-9">@(Model.CategoryName ?? "-")</dd>
+
+                <dt class="col-sm-3">タグ</dt>
+                <dd class="col-sm-9">
+                    @if (Model.Tags.Any())
+                    {
+                        @foreach (var tag in Model.Tags)
+                        {
+                            <span class="badge bg-secondary me-1">@tag</span>
+                        }
+                    }
+                    else
+                    {
+                        <span class="text-muted">なし</span>
+                    }
+                </dd>
+
+                <dt class="col-sm-3">著者</dt>
+                <dd class="col-sm-9">@Model.AuthorName</dd>
+
+                <dt class="col-sm-3">ステータス</dt>
+                <dd class="col-sm-9">
+                    @if (Model.IsPublished)
+                    {
+                        <span class="badge bg-success">公開</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-warning">下書き</span>
+                    }
+                </dd>
+
+                <dt class="col-sm-3">作成日</dt>
+                <dd class="col-sm-9">@Model.CreatedAt.ToString("yyyy/MM/dd HH:mm")</dd>
+
+                @if (Model.PublishedAt.HasValue)
+                {
+                    <dt class="col-sm-3">公開日</dt>
+                    <dd class="col-sm-9">@Model.PublishedAt.Value.ToString("yyyy/MM/dd HH:mm")</dd>
+                }
+
+                <dt class="col-sm-3">コメント数</dt>
+                <dd class="col-sm-9">@Model.CommentCount</dd>
+
+                <dt class="col-sm-3">抜粋</dt>
+                <dd class="col-sm-9">@(Model.Excerpt ?? "-")</dd>
+            </dl>
+
+            <form asp-action="DeleteConfirmed" asp-route-id="@Model.Id" method="post">
+                @Html.AntiForgeryToken()
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash"></i> 削除する
+                    </button>
+                    <a asp-action="Index" class="btn btn-secondary">キャンセル</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

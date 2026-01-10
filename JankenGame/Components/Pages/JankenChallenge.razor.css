@@ -1,0 +1,324 @@
+.challenge-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 2rem;
+}
+
+h3 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+
+.description {
+    text-align: center;
+    color: #666;
+    margin-bottom: 2rem;
+}
+
+/* スタート画面 */
+.start-screen {
+    text-align: center;
+}
+
+.rules {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    text-align: left;
+}
+
+.rules h4 {
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+.rules ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.rules li {
+    padding: 0.5rem 0;
+    color: #555;
+}
+
+.rules li::before {
+    content: "✓ ";
+    color: #28a745;
+    font-weight: bold;
+    margin-right: 0.5rem;
+}
+
+.btn-start {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 1rem 3rem;
+    font-size: 1.2rem;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-start:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+
+/* ゲーム画面 */
+.game-screen {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.score-board {
+    display: flex;
+    justify-content: space-around;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.score-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.score-item .label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.score-item .value {
+    font-size: 1.8rem;
+    font-weight: bold;
+}
+
+/* 問題エリア */
+.question-area, .answer-area {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.computer-hand {
+    margin-bottom: 2rem;
+}
+
+.computer-hand .label {
+    font-size: 1rem;
+    color: #666;
+    margin-bottom: 0.5rem;
+}
+
+.computer-hand .hand-display {
+    font-size: 3rem;
+    font-weight: bold;
+    color: #333;
+}
+
+.instruction {
+    font-size: 1.2rem;
+    color: #555;
+    margin-bottom: 2rem;
+}
+
+/* 選択肢ボタン */
+.choices {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.btn-choice {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    background: white;
+    border: 3px solid #e0e0e0;
+    padding: 1.5rem 2rem;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btn-choice:hover {
+    border-color: #667eea;
+    transform: translateY(-4px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+}
+
+.btn-choice .emoji {
+    font-size: 3rem;
+}
+
+.btn-choice .label {
+    font-size: 1rem;
+    color: #333;
+    font-weight: bold;
+}
+
+/* 結果表示 */
+.result-message {
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+}
+
+.result-message.correct {
+    background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+}
+
+.result-message.wrong {
+    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+}
+
+.result-message .emoji {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.result-message .message {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 1rem;
+}
+
+.result-message .detail {
+    font-size: 1rem;
+    color: #555;
+    margin: 0.5rem 0;
+}
+
+/* 次へボタン */
+.btn-next {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 0.8rem 2.5rem;
+    font-size: 1.1rem;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+}
+
+.btn-next:hover {
+    background: #218838;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+}
+
+/* ゲーム終了ボタン */
+.game-controls {
+    text-align: center;
+}
+
+.btn-end {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 0.8rem 2rem;
+    font-size: 1rem;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-end:hover {
+    background: #c82333;
+    transform: translateY(-2px);
+}
+
+/* 最終結果 */
+.final-result {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    margin-top: 2rem;
+}
+
+.final-result h4 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 1.5rem;
+}
+
+.result-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1.5rem;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.stat-value {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #333;
+}
+
+.stat-value.score {
+    color: #667eea;
+}
+
+.stat-value.correct {
+    color: #28a745;
+}
+
+.stat-value.wrong {
+    color: #dc3545;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .challenge-container {
+        padding: 1rem;
+    }
+
+    .choices {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .btn-choice {
+        padding: 1rem 1.5rem;
+    }
+
+    .score-board {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .result-stats {
+        grid-template-columns: 1fr;
+    }
+}
