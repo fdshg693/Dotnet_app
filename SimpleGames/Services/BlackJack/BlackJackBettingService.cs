@@ -13,7 +13,6 @@ namespace JankenGame.Services.BlackJack
 
         public int CurrentBet => _currentRound.CurrentBet;
         public int Pot => _currentRound.Pot;
-        public List<PlayerBettingState> PlayerStates => _currentRound.PlayerStates;
         public int CurrentPlayerIndex => _currentRound.CurrentPlayerIndex;
 
         public BlackJackBettingService()
@@ -56,25 +55,13 @@ namespace JankenGame.Services.BlackJack
 
                 state.TotalChips -= AnteAmount;
                 state.CurrentBet = AnteAmount;
-                state.Player.Chips = state.TotalChips;
-                state.Player.CurrentBet = AnteAmount;
                 _currentRound.Pot += AnteAmount;
             }
 
             _currentRound.CurrentBet = AnteAmount;
+            // アンテ後にプレイヤーへ同期
+            SyncStatesToPlayers();
             return GetActivePlayers().Any();
-        }
-
-        /// <summary>
-        /// プレイヤーがベット可能か判定
-        /// </summary>
-        public bool CanPlayerBet(BlackJackPlayer player, int amount)
-        {
-            var state = GetPlayerState(player);
-            if (state == null || state.HasFolded || state.IsAllIn)
-                return false;
-
-            return state.TotalChips >= amount;
         }
 
         /// <summary>
@@ -90,7 +77,6 @@ namespace JankenGame.Services.BlackJack
             {
                 case BettingAction.Fold:
                     state.HasFolded = true;
-                    state.Player.HasFolded = true;
                     break;
 
                 case BettingAction.Check:
@@ -109,8 +95,6 @@ namespace JankenGame.Services.BlackJack
                     state.TotalChips -= callAmount;
                     state.CurrentBet += callAmount;
                     _currentRound.Pot += callAmount;
-                    state.Player.Chips = state.TotalChips;
-                    state.Player.CurrentBet = state.CurrentBet;
                     break;
 
                 case BettingAction.Raise:
@@ -131,8 +115,6 @@ namespace JankenGame.Services.BlackJack
                     state.CurrentBet += totalRaiseAmount;
                     _currentRound.Pot += totalRaiseAmount;
                     _currentRound.CurrentBet = state.CurrentBet;
-                    state.Player.Chips = state.TotalChips;
-                    state.Player.CurrentBet = state.CurrentBet;
                     break;
 
                 case BettingAction.AllIn:
@@ -154,9 +136,6 @@ namespace JankenGame.Services.BlackJack
                             }
                         }
                     }
-
-                    state.Player.Chips = 0;
-                    state.Player.CurrentBet = state.CurrentBet;
                     break;
 
                 default:
@@ -164,6 +143,8 @@ namespace JankenGame.Services.BlackJack
             }
 
             state.HasActedThisRound = true;
+            // ベット完了後にそのプレイヤーだけ同期
+            SyncStateToPlayer(state);
             return true;
         }
 
@@ -240,11 +221,12 @@ namespace JankenGame.Services.BlackJack
                         amount += remainder;
 
                     state.TotalChips += amount;
-                    winner.Chips = state.TotalChips;
                 }
             }
 
             _currentRound.Pot = 0;
+            // ポット分配後にまとめて同期
+            SyncStatesToPlayers();
         }
 
         /// <summary>
@@ -255,18 +237,6 @@ namespace JankenGame.Services.BlackJack
             return _currentRound.PlayerStates
                 .Where(s => !s.HasFolded)
                 .ToList();
-        }
-
-        /// <summary>
-        /// 現在のプレイヤー状態を取得
-        /// </summary>
-        public PlayerBettingState? GetCurrentPlayerState()
-        {
-            if (_currentRound.CurrentPlayerIndex < 0 || 
-                _currentRound.CurrentPlayerIndex >= _currentRound.PlayerStates.Count)
-                return null;
-
-            return _currentRound.PlayerStates[_currentRound.CurrentPlayerIndex];
         }
 
         /// <summary>
@@ -290,14 +260,15 @@ namespace JankenGame.Services.BlackJack
                 state.HasFolded = false;
                 state.IsAllIn = false;
                 state.HasActedThisRound = false;
-                state.Player.CurrentBet = 0;
-                state.Player.HasFolded = false;
             }
 
             _currentRound.CurrentBet = 0;
             _currentRound.Pot = 0;
             _currentRound.CurrentPlayerIndex = 0;
             _currentRound.RoundComplete = false;
+            
+            // リセット後にプレイヤーへ同期
+            SyncStatesToPlayers();
         }
 
         /// <summary>
@@ -321,11 +292,24 @@ namespace JankenGame.Services.BlackJack
         }
 
         /// <summary>
-        /// アンティ額を取得
+        /// 単一のプレイヤー状態をBlackJackPlayerに同期
         /// </summary>
-        public int GetAnteAmount()
+        private void SyncStateToPlayer(PlayerBettingState state)
         {
-            return AnteAmount;
+            state.Player.Chips = state.TotalChips;
+            state.Player.CurrentBet = state.CurrentBet;
+            state.Player.HasFolded = state.HasFolded;
+        }
+
+        /// <summary>
+        /// 全てのプレイヤー状態をBlackJackPlayerに同期
+        /// </summary>
+        private void SyncStatesToPlayers()
+        {
+            foreach (var state in _currentRound.PlayerStates)
+            {
+                SyncStateToPlayer(state);
+            }
         }
     }
 }

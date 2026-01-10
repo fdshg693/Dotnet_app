@@ -55,15 +55,6 @@ namespace JankenGame.Services.BlackJack
         }
 
         /// <summary>
-        /// デッキをリセット（場のカードをクリア）
-        /// </summary>
-        public void ResetDeck()
-        {
-            _cardsInPlay.Clear();
-            _deck = new Deck();
-        }
-
-        /// <summary>
         /// 場にあるカードをクリア（ゲームリセット時に使用）
         /// </summary>
         public void ClearCardsInPlay()

@@ -1,3 +1,5 @@
+using JankenGame.Models.BlackJack;
+
 namespace JankenGame.Services.BlackJack
 {
     /// <summary>
@@ -34,11 +36,75 @@ namespace JankenGame.Services.BlackJack
         }
 
         /// <summary>
-        /// ブラックジャック（21）かどうかを判定
+        /// 複数プレイヤーの勝者を判定し、勝敗を記録
         /// </summary>
-        public bool IsBlackjack(int score, int cardCount)
+        /// <returns>勝者のリスト（引き分けのプレイヤーも含む）</returns>
+        public List<BlackJackPlayer> DetermineWinners(List<BlackJackPlayer> activePlayers, BlackJackDealer dealer)
         {
-            return score == 21 && cardCount == 2;
+            var winners = new List<BlackJackPlayer>();
+
+            foreach (var player in activePlayers)
+            {
+                string result = DetermineWinner(
+                    player.Score,
+                    dealer.Score,
+                    player.IsBust,
+                    dealer.IsBust
+                );
+
+                if (result.Contains("あなたの勝ち") || result.Contains("プレイヤーの勝ち"))
+                {
+                    winners.Add(player);
+                    player.RecordWin();
+                    dealer.RecordLoss();
+                }
+                else if (result.Contains("ディーラーの勝ち") || result.Contains("バースト"))
+                {
+                    player.RecordLoss();
+                    dealer.RecordWin();
+                }
+                else
+                {
+                    // 引き分けの場合もベットを返す（勝者リストに追加）
+                    winners.Add(player);
+                    player.RecordDraw();
+                    dealer.RecordDraw();
+                }
+            }
+
+            return winners;
+        }
+
+        /// <summary>
+        /// 全プレイヤーの勝敗を記録
+        /// </summary>
+        public void RecordGameResults(List<BlackJackPlayer> players, BlackJackDealer dealer)
+        {
+            foreach (var player in players)
+            {
+                string result = DetermineWinner(
+                    player.Score,
+                    dealer.Score,
+                    player.IsBust,
+                    dealer.IsBust
+                );
+
+                if (result.Contains("あなたの勝ち") || result.Contains("プレイヤーの勝ち"))
+                {
+                    player.RecordWin();
+                    dealer.RecordLoss();
+                }
+                else if (result.Contains("ディーラーの勝ち") || result.Contains("バースト"))
+                {
+                    player.RecordLoss();
+                    dealer.RecordWin();
+                }
+                else
+                {
+                    player.RecordDraw();
+                    dealer.RecordDraw();
+                }
+            }
         }
     }
 }

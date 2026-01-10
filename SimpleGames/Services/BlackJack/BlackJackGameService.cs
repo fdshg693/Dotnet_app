@@ -17,7 +17,6 @@ namespace JankenGame.Services.BlackJack
         public BlackJackGameState GameState => _stateManager.GameState;
         public List<BlackJackPlayer> Players => _stateManager.Players;
         public BlackJackDealer Dealer => _stateManager.Dealer;
-        public int CurrentPlayerIndex => _stateManager.CurrentPlayerIndex;
         public BlackJackPlayer? CurrentPlayer => _stateManager.CurrentPlayer;
 
         // ベッティング関連の公開プロパティ
@@ -112,23 +111,6 @@ namespace JankenGame.Services.BlackJack
         }
 
         /// <summary>
-        /// 現在のプレイヤーが行動可能か
-        /// </summary>
-        public bool CanCurrentPlayerAct()
-        {
-            if (CurrentPlayer == null)
-                return false;
-
-            if (GameState == BlackJackGameState.BettingRound)
-            {
-                var state = _bettingService.GetPlayerState(CurrentPlayer);
-                return state != null && !state.HasFolded && !state.IsAllIn;
-            }
-
-            return GameState == BlackJackGameState.PlayersTurn;
-        }
-
-        /// <summary>
         /// 最小ベット額（コール額）を取得
         /// </summary>
         public int GetMinimumBet()
@@ -168,51 +150,11 @@ namespace JankenGame.Services.BlackJack
                 return;
             }
 
-            // 通常の勝敗判定
-            var winners = DetermineWinners(activePlayers);
+            // 通常の勝敗判定（LogicServiceに委譲）
+            var winners = _logicService.DetermineWinners(activePlayers, Dealer);
             _bettingService.DistributePot(winners);
             EndGame();
         }
-
-        /// <summary>
-        /// 勝者を判定
-        /// </summary>
-        private List<BlackJackPlayer> DetermineWinners(List<BlackJackPlayer> activePlayers)
-        {
-            var winners = new List<BlackJackPlayer>();
-
-            foreach (var player in activePlayers)
-            {
-                string result = _logicService.DetermineWinner(
-                    player.Score,
-                    Dealer.Score,
-                    player.IsBust,
-                    Dealer.IsBust
-                );
-
-                if (result.Contains("あなたの勝ち") || result.Contains("プレイヤーの勝ち"))
-                {
-                    winners.Add(player);
-                    player.RecordWin();
-                    Dealer.RecordLoss();
-                }
-                else if (result.Contains("ディーラーの勝ち") || result.Contains("バースト"))
-                {
-                    player.RecordLoss();
-                    Dealer.RecordWin();
-                }
-                else
-                {
-                    // 引き分けの場合もベットを返す（勝者リストに追加）
-                    winners.Add(player);
-                    player.RecordDraw();
-                    Dealer.RecordDraw();
-                }
-            }
-
-            return winners;
-        }
-
 
         /// <summary>
         /// 現在のプレイヤーがヒット
@@ -308,42 +250,8 @@ namespace JankenGame.Services.BlackJack
         private void EndGame()
         {
             _stateManager.EndGame();
-
-            // 各プレイヤーの勝敗を判定
-            foreach (var player in Players)
-            {
-                string result = _logicService.DetermineWinner(
-                    player.Score,
-                    Dealer.Score,
-                    player.IsBust,
-                    Dealer.IsBust
-                );
-
-                RecordResult(player, result);
-            }
-        }
-
-
-        /// <summary>
-        /// 結果を記録
-        /// </summary>
-        private void RecordResult(BlackJackPlayer player, string result)
-        {
-            if (result.Contains("あなたの勝ち") || result.Contains("プレイヤーの勝ち"))
-            {
-                player.RecordWin();
-                Dealer.RecordLoss();
-            }
-            else if (result.Contains("ディーラーの勝ち") || result.Contains("バースト"))
-            {
-                player.RecordLoss();
-                Dealer.RecordWin();
-            }
-            else
-            {
-                player.RecordDraw();
-                Dealer.RecordDraw();
-            }
+            // 勝敗記録はLogicServiceに委譲
+            _logicService.RecordGameResults(Players, Dealer);
         }
 
         /// <summary>
@@ -404,22 +312,6 @@ namespace JankenGame.Services.BlackJack
 
             // ベッティングサービスをリセット
             _bettingService.ResetBettingRound();
-        }
-
-        /// <summary>
-        /// ゲームをリセット（カードを場から回収）- 旧バージョン互換性のため残す
-        /// </summary>
-        public void ReturnCards(BlackJackPlayer player, BlackJackDealer dealer)
-        {
-            _deckManager.ClearCardsInPlay();
-        }
-
-        /// <summary>
-        /// ゲームをリセット（カードを場から回収）- BlackJackHand版（互換性のため残す）
-        /// </summary>
-        public void ReturnCards(BlackJackHand player, BlackJackHand dealer)
-        {
-            _deckManager.ClearCardsInPlay();
         }
     }
 }
