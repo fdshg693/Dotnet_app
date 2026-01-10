@@ -30,19 +30,19 @@ namespace JankenGame.Services.Janken
                 throw new ArgumentException("すべてのプレイヤーが手を出す必要があります");
             }
 
-            var gameResult = _logicService.GetWinningHands(hands);
+            var (existsWinner, winningHand) = _logicService.GetWinningHands(hands);
             
-            if (!gameResult.ExistsWinner)
+            if (!existsWinner)
             {
                 return (null, new List<string>());
             }
 
             var winnerIds = players
-                .Where(p => p.Hand == gameResult.WinningHand)
+                .Where(p => p.Hand == winningHand)
                 .Select(p => p.Id)
                 .ToList();
 
-            return (gameResult.WinningHand, winnerIds);
+            return (winningHand, winnerIds);
         }
     }
 }

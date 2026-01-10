@@ -30,7 +30,7 @@ namespace JankenGame.Services.Janken
         /// <param name="hands">ジャンケンで出された手の配列</param>
         /// <returns>ゲーム結果（勝者の有無と勝った手）</returns>
         /// <exception cref="ArgumentException">手の配列が空またはnullの場合</exception>
-        public JankenGameResult GetWinningHands(params JankenHand[] hands)
+        public (bool ExistsWinner, JankenHand? WinningHand) GetWinningHands(params JankenHand[] hands)
         {
             if (hands == null || hands.Length == 0)
             {
@@ -43,13 +43,13 @@ namespace JankenGame.Services.Janken
             // 全員同じ手 → 引き分け
             if (distinctHands.Count == 1)
             {
-                return JankenGameResult.CreateDraw();
+                return (false, null);
             }
 
             // 3種類全て出ている → 引き分け
             if (distinctHands.Count == 3)
             {
-                return JankenGameResult.CreateDraw();
+                return (false, null);
             }
 
             // 2種類の場合 → どちらかが勝つ
@@ -60,11 +60,11 @@ namespace JankenGame.Services.Janken
             // hand1 が hand2 に勝つ手かどうか判定
             if (hand1 == GetWinningHand(hand2))
             {
-                return JankenGameResult.CreateWinner(hand1);
+                return (true, hand1);
             }
             else
             {
-                return JankenGameResult.CreateWinner(hand2);
+                return (true, hand2);
             }
         }
 
@@ -76,8 +76,8 @@ namespace JankenGame.Services.Janken
         /// <returns>プレイヤーが勝つ場合はtrue</returns>
         public bool IsWinning(JankenHand playerHand, JankenHand opponentHand)
         {
-            var gameResult = GetWinningHands(playerHand, opponentHand);
-            return gameResult.ToPlayerResult(playerHand) == JankenResultEnum.Win;
+            var (existsWinner, winningHand) = GetWinningHands(playerHand, opponentHand);
+            return existsWinner && winningHand == playerHand;
         }
     }
 }

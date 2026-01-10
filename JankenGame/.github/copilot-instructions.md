@@ -58,7 +58,7 @@ wwwroot/             - Static assets (CSS, Bootstrap)
 
 ### Model Design
 - **Enums**: `JankenHand` (Rock/Paper/Scissors), `JankenResultEnum` (Win/Lose/Draw), `BlackJackGameState`, `Rank`, `Suit`
-- **Records**: Use record types for immutable game results (`MultiPlayerGameRecord`, `JankenGameResult`, `BlackJackGameRecord`)
+- **Records**: Use record types for immutable game results (`MultiPlayerGameRecord`, `BlackJackGameRecord`)
 - **Classes**: Use classes for mutable game state (`JankenPlayer`, `JankenChallengeGame`, `BlackJackPlayer`, `BlackJackDealer`)
 - **Inheritance**: `BlackJackParticipant` is the base class for `BlackJackPlayer` and `BlackJackDealer`
 

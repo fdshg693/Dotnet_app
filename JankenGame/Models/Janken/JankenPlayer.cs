@@ -39,7 +39,7 @@
         /// </summary>
         /// <param name="name">プレイヤー名</param>
         /// <param name="type">プレイヤーのタイプ</param>
-        public JankenPlayer(string name = "プレイヤー", JankenPlayerType type = JankenPlayerType.Computer)
+        public JankenPlayer(string name , JankenPlayerType type)
         {
             Id = Guid.NewGuid().ToString();
             Name = name;

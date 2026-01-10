@@ -33,7 +33,6 @@ Models/
 │   ├── JankenRecord.cs
 │   ├── JankenResultEnum.cs
 │   ├── JankenChallengeGame.cs
-│   ├── JankenGameResult.cs
 │   └── MultiPlayerGameRecord.cs
 └── BlackJack/                # ブラックジャック関連モデル
     ├── BlackJackParticipant.cs

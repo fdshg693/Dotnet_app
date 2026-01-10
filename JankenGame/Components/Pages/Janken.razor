@@ -5,10 +5,23 @@
 
 <h3>じゃんけんゲーム</h3>
 
+@if (HasError)
+{
+    <div class="alert alert-danger" role="alert">
+        <h4 class="alert-heading">⚠️ エラーが発生しました</h4>
+        <p>@ErrorMessage</p>
+        <hr>
+        <div class="d-flex gap-2">
+            <button class="btn btn-warning" @onclick="RecoverFromError">ゲームを再開</button>
+            <button class="btn btn-secondary" @onclick="ResetGameFromError">最初からやり直す</button>
+        </div>
+    </div>
+}
+
 <div class="game-setup">
     <div class="player-count-control">
         <label>対戦人数 (あなたを含む): </label>
-        <select value="@selectedPlayerCount.ToString()" @onchange="OnPlayerCountChanged">
+        <select value="@selectedPlayerCount.ToString()" @onchange="OnPlayerCountChanged" disabled="@AllPlayersHandReady" aria-label="対戦人数を選択">
             <option value="2">2人</option>
             <option value="3">3人</option>
             <option value="4">4人</option>
@@ -19,12 +32,12 @@
 </div>
 
 <div class="choices">
-    <button @onclick="() => Play(JankenHand.Rock)">✊ グー</button>
-    <button @onclick="() => Play(JankenHand.Paper)">✋ パー</button>
-    <button @onclick="() => Play(JankenHand.Scissors)">✌️ チョキ</button>
+    <button @onclick="() => Play(JankenHand.Rock)" disabled="@AllPlayersHandReady" aria-label="グーを選択">✊ グー</button>
+    <button @onclick="() => Play(JankenHand.Paper)" disabled="@AllPlayersHandReady" aria-label="パーを選択">✋ パー</button>
+    <button @onclick="() => Play(JankenHand.Scissors)" disabled="@AllPlayersHandReady" aria-label="チョキを選択">✌️ チョキ</button>
 </div>
 
-@if (AllPlayersReady)
+@if (AllPlayersHandReady)
 {
     <div class="result">
         <div class="hands-display">
@@ -40,15 +53,15 @@
         <div class="game-result">
             <p class="outcome-message">@OutcomeMessage</p>
             
-            @if (LastWinningHand != null)
+            @if (LastGameResult?.WinningHand != null)
             {
                 <div class="winners">
-                    <p><strong>勝者:</strong> @string.Join(", ", LastWinners.Select(id => Players.First(p => p.Id == id).Name))</p>
+                    <p><strong>勝者:</strong> @string.Join(", ", LastGameResult.WinnerIds.Select(id => GetPlayerName(id)))</p>
                 </div>
             }
         </div>
 
-        <button @onclick="ResetGame">リセット</button>
+        <button @onclick="ResetGame" aria-label="ゲームをリセット">リセット</button>
     </div>
 }
 
@@ -87,12 +100,12 @@
                 <li>
                     @foreach (var kvp in record.PlayerHands)
                     {
-                        var playerName = Players.First(p => p.Id == kvp.Key).Name;
+                        var playerName = GetPlayerName(kvp.Key);
                         <span>@playerName: @kvp.Value.GetDescription() / </span>
                     }
-                    @if (record.WinningHand != null)
+                    @if (record.WinningHand is { } winningHand)
                     {
-                        <span>→ 勝ち手: @record.WinningHand.Value.GetDescription()</span>
+                        <span>→ 勝ち手: @winningHand.GetDescription()</span>
                     }
                     else
                     {
@@ -106,34 +119,50 @@
 }
 
 @code {
+    private const int MaxHistoryCount = 5;
+    private const int HumanPlayerIndex = 0;
+    private const int FirstComputerPlayerIndex = 1;
+    private const string HumanPlayerName = "あなた";
+    private const string ComputerPlayerNameFormat = "コンピューター{0}";
+
     private int selectedPlayerCount = 3;
     private string OutcomeMessage = "";
-    private JankenHand? LastWinningHand = null;
-    private List<string> LastWinners = new();
+    private MultiPlayerGameRecord? LastGameResult = null;
+    
+    // エラー管理
+    private bool HasError = false;
+    private string ErrorMessage = "";
 
     private List<JankenPlayer> Players = new();
-    private MultiPlayerGameRecordList RecordList = new();
+    private List<MultiPlayerGameRecord> RecordList = new();
     private Random rnd = new();
     private JankenGameService gameService = new();
 
-    private bool AllPlayersReady => Players.All(p => p.Hand != null);
-    private IEnumerable<MultiPlayerGameRecord> RecentRecords => RecordList.OrderByDescending(r => r.Timestamp).Take(5);
+    private bool AllPlayersHandReady => Players.All(p => p.Hand != null);
+    private IEnumerable<MultiPlayerGameRecord> RecentRecords => RecordList.OrderByDescending(r => r.Timestamp).Take(MaxHistoryCount);
 
     protected override void OnInitialized()
     {
         InitializePlayers();
     }
 
+    /// <summary>
+    /// プレイヤーリストを初期化する
+    /// 選択された人数に応じて、1人の人間プレイヤーと複数のコンピュータープレイヤーを作成する
+    /// </summary>
     private void InitializePlayers()
     {
         Players.Clear();
+        
         // ユーザー（最初のプレイヤー）
-        Players.Add(new JankenPlayer("あなた", JankenPlayerType.Human));
+        var humanPlayer = new JankenPlayer(HumanPlayerName, JankenPlayerType.Human);
+        Players.Add(humanPlayer);
         
         // コンピューターのプレイヤー
-        for (int i = 1; i < selectedPlayerCount; i++)
+        for (int i = FirstComputerPlayerIndex; i < selectedPlayerCount; i++)
         {
-            Players.Add(new JankenPlayer($"コンピューター{i}", JankenPlayerType.Computer));
+            var computerPlayer = new JankenPlayer(string.Format(ComputerPlayerNameFormat, i), JankenPlayerType.Computer);
+            Players.Add(computerPlayer);
         }
     }
 
@@ -142,29 +171,47 @@
         if (int.TryParse(e.Value?.ToString(), out int count))
         {
             selectedPlayerCount = count;
+            RecordList.Clear();
             InitializePlayers();
             ResetGame();
             StateHasChanged();
         }
     }
 
+    /// <summary>
+    /// ゲームを実行する - ユーザーとコンピューターの手を決定し、勝者を判定
+    /// </summary>
+    /// <param name="userJankenHand">ユーザーが選択した手（グー/パー/チョキ）</param>
     private void Play(JankenHand userJankenHand)
     {
         // ユーザーが手を出す
-        Players[0].Hand = userJankenHand;
+        Players[HumanPlayerIndex].Hand = userJankenHand;
 
-        // コンピューターが手を出す
-        for (int i = 1; i < Players.Count; i++)
+        // コンピューターがランダムに手を出す
+        // 全てのコンピュータープレイヤーに対してランダムな手を割り当てる
+        var jankenHands = Enum.GetValues<JankenHand>();
+        for (int i = FirstComputerPlayerIndex; i < Players.Count; i++)
         {
-            Players[i].Hand = (JankenHand)rnd.Next(0, 3);
+            Players[i].Hand = jankenHands[rnd.Next(jankenHands.Length)];
         }
 
+        // 勝者を判定
         DetermineWinner();
     }
 
+    /// <summary>
+    /// 複数人じゃんけんの勝者を判定する
+    /// 
+    /// 判定ルール:
+    /// - 全員同じ手、または3種類全てが出た場合: 引き分け
+    /// - 2種類の手が出た場合: じゃんけんのルールに従って勝者を決定
+    /// - 同じ手を出した複数のプレイヤーが勝者になる場合がある（同時勝利）
+    /// 
+    /// ゲーム結果はRecordListに記録され、UIに表示される
+    /// </summary>
     private void DetermineWinner()
     {
-        if (!AllPlayersReady)
+        if (!AllPlayersHandReady)
         {
             OutcomeMessage = "手を選んでください。";
             return;
@@ -172,29 +219,43 @@
 
         try
         {
+            // JankenGameServiceを使用して複数人対戦の勝者を判定
+            // winningHand: 勝った手（引き分けの場合はnull）
+            // winnerIds: 勝者のプレイヤーIDリスト（引き分けの場合は全員）
             var (winningHand, winnerIds) = gameService.DetermineMultiPlayerWinner(Players);
             
-            // 記録を追加
+            // 記録を追加（統計とゲーム履歴）
             var playerHands = Players.ToDictionary(p => p.Id, p => p.Hand!.Value);
-            RecordList.AddRecord(playerHands, winningHand, winnerIds);
+            var record = MultiPlayerGameRecordHelper.AddRecord(playerHands, winningHand, winnerIds);
+            RecordList.Add(record);
 
-            LastWinningHand = winningHand;
-            LastWinners = winnerIds;
+            LastGameResult = record;
 
-            // メッセージを設定
+            // 結果メッセージを設定
             if (winningHand == null)
             {
                 OutcomeMessage = "引き分け！";
             }
             else
             {
-                var winnerNames = string.Join(", ", winnerIds.Select(id => Players.First(p => p.Id == id).Name));
+                var winnerNames = string.Join(", ", winnerIds.Select(id => GetPlayerName(id)));
                 OutcomeMessage = $"{winnerNames}の勝ち！🎉";
             }
         }
+        catch (ArgumentException)
+        {
+            // 入力値の問題
+            SetError("予期しない入力が発生しました。ゲームをリセットしてもう一度お試しください。");
+        }
+        catch (InvalidOperationException)
+        {
+            // ゲーム状態の問題
+            SetError("ゲームの状態が不正です。ゲームをリセットしてもう一度お試しください。");
+        }
         catch (Exception ex)
         {
-            OutcomeMessage = $"エラー: {ex.Message}";
+            // 予期しないエラー
+            SetError($"予期しないエラーが発生しました。{ex.Message}");
         }
     }
 
@@ -205,7 +266,36 @@
             player.Hand = null;
         }
         OutcomeMessage = "";
-        LastWinningHand = null;
-        LastWinners.Clear();
+        LastGameResult = null;
+    }
+
+    private string GetPlayerName(string id)
+    {
+        return Players.FirstOrDefault(p => p.Id == id)?.Name ?? "不明";
+    }
+
+    private void SetError(string message)
+    {
+        HasError = true;
+        ErrorMessage = message;
+        OutcomeMessage = "";
+    }
+
+    private void RecoverFromError()
+    {
+        // エラー状態をクリアして現在のラウンドをリセット
+        HasError = false;
+        ErrorMessage = "";
+        ResetGame();
+    }
+
+    private void ResetGameFromError()
+    {
+        // エラー状態をクリアして完全にリセット
+        HasError = false;
+        ErrorMessage = "";
+        RecordList.Clear();
+        InitializePlayers();
+        ResetGame();
     }
 }

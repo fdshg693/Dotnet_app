@@ -1,3 +1,61 @@
+::deep .alert {
+    margin-bottom: 20px;
+    padding: 15px;
+    border-radius: 5px;
+}
+
+::deep .alert-danger {
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+}
+
+::deep .alert-heading {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 1.25rem;
+}
+
+::deep .alert hr {
+    border-top: 1px solid #f5c6cb;
+    margin: 10px 0;
+}
+
+::deep .d-flex {
+    display: flex;
+}
+
+::deep .gap-2 {
+    gap: 10px;
+}
+
+::deep .btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+::deep .btn-warning {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+::deep .btn-warning:hover {
+    background-color: #e0a800;
+}
+
+::deep .btn-secondary {
+    background-color: #6c757d;
+    color: white;
+}
+
+::deep .btn-secondary:hover {
+    background-color: #5a6268;
+}
+
 ::deep .game-setup {
     margin-bottom: 20px;
     padding: 10px;
