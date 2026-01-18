@@ -1,0 +1,65 @@
+@model IEnumerable<dotnet_mvc_test.Models.ViewModels.ArticleListViewModel>
+
+@{
+    ViewData["Title"] = "記事一覧";
+}
+
+<div class="container my-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-4">@ViewData["Title"]</h1>
+        </div>
+    </div>
+
+    @if (Model != null && Model.Any())
+    {
+        <div class="row g-4">
+            @foreach (var article in Model)
+            {
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100 shadow-sm">
+                        @if (!string.IsNullOrEmpty(article.FeaturedImageUrl))
+                        {
+                            <img src="@article.FeaturedImageUrl" class="card-img-top" alt="@article.Title" style="height: 200px; object-fit: cover;">
+                        }
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">
+                                <a href="/articles/@article.Slug" class="text-decoration-none text-dark">@article.Title</a>
+                            </h5>
+                            
+                            @if (!string.IsNullOrEmpty(article.Excerpt))
+                            {
+                                <p class="card-text text-muted">@article.Excerpt</p>
+                            }
+                            
+                            <div class="mt-auto">
+                                @if (!string.IsNullOrEmpty(article.CategoryName))
+                                {
+                                    <span class="badge bg-primary mb-2">@article.CategoryName</span>
+                                }
+                                
+                                <div class="text-muted small">
+                                    <div><i class="bi bi-person"></i> @article.AuthorName</div>
+                                    <div><i class="bi bi-calendar"></i> @article.PublishedAt.ToString("yyyy年MM月dd日")</div>
+                                </div>
+                                
+                                <a href="/articles/@article.Slug" class="btn btn-outline-primary btn-sm mt-2 w-100">詳細を読む</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col">
+                <div class="alert alert-info text-center" role="alert">
+                    <h4 class="alert-heading">記事がありません</h4>
+                    <p class="mb-0">現在、公開されている記事はありません。</p>
+                </div>
+            </div>
+        </div>
+    }
+</div>

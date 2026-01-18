@@ -1,3 +1,7 @@
+---
+trigger: always_on
+---
+
 # Copilot Instructions for dotnet_mvc_test
 
 ## Project Overview

@@ -94,6 +94,11 @@ if (!app.Environment.IsDevelopment())
 // セキュアな通信を強制し、中間者攻撃を防ぐ
 app.UseHttpsRedirection();
 
+// UseStaticFiles: 静的ファイル(CSS, JS, 画像など)の配信を有効化
+// wwwrootフォルダ内のファイルを直接HTTPリクエストで取得可能にする
+// MapStaticAssetsと併用することで、より広範な静的ファイルサポートを実現
+app.UseStaticFiles();
+
 // UseRouting: リクエストURLを解析し、適切なエンドポイントにルーティング
 // この後のミドルウェアでルート情報が利用可能になる
 app.UseRouting();
@@ -115,6 +120,23 @@ app.UseAuthorization();
 app.MapStaticAssets();
 
 // ルートマッピング: URLパターンとコントローラー/アクションの対応関係を定義
+// 注意: より具体的なルート（パラメータが少ない）を先に定義する
+
+// 記事一覧用ルート
+// パターン: /articles
+// 例: /articles → ArticlesController.Index()
+app.MapControllerRoute(
+    name: "articles",
+    pattern: "articles",
+    defaults: new { controller = "Articles", action = "Index" });
+
+// 記事詳細用ルート (スラッグベース)
+// パターン: /articles/{slug}
+// 例: /articles/my-first-post → ArticlesController.Details(slug: "my-first-post")
+app.MapControllerRoute(
+    name: "article_details",
+    pattern: "articles/{slug}",
+    defaults: new { controller = "Articles", action = "Details" });
 
 // Admin Area route: 管理画面用のルート
 // パターン: /admin/{controller}/{action}/{id?}
