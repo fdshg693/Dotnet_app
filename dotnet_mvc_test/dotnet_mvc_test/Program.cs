@@ -4,6 +4,8 @@ using dotnet_mvc_test.Data;
 using dotnet_mvc_test.Models.Entities;
 using dotnet_mvc_test.Services;
 using dotnet_mvc_test.Repositories;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 
 // 以下のような順序で設定を読み込む
 // 1. appsettings.json
@@ -73,6 +75,10 @@ builder.Services.AddScoped<ITwoFactorService, TwoFactorService>();       // 二�
 // - ルーティング、モデルバインディング、検証機能を含む
 // - Razorビューエンジンを有効化
 builder.Services.AddControllersWithViews();
+
+builder.Services.AddFluentValidationAutoValidation()
+    .AddFluentValidationClientsideAdapters();
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 var app = builder.Build();
 
