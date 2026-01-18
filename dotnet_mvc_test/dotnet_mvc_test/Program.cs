@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using dotnet_mvc_test.Data;
 using dotnet_mvc_test.Models.Entities;
 using dotnet_mvc_test.Services;
+using dotnet_mvc_test.Repositories;
 
 // 以下のような順序で設定を読み込む
 // 1. appsettings.json
@@ -51,6 +52,12 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()  // Entity Framework CoreでIdentityデータを保存
 .AddDefaultTokenProviders();                        // パスワードリセット、メール確認などのトークン生成機能を追加
+
+// Repository の登録
+// AddScoped: HTTPリクエストごとに1つのインスタンスが作成され、リクエスト内で共有される
+builder.Services.AddScoped<IArticleRepository, ArticleRepository>();     // 記事データアクセス
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();   // カテゴリデータアクセス
+builder.Services.AddScoped<ITagRepository, TagRepository>();             // タグデータアクセス
 
 // アプリケーション固有のサービスをDIコンテナに登録
 // AddScoped: HTTPリクエストごとに1つのインスタンスが作成され、リクエスト内で共有される

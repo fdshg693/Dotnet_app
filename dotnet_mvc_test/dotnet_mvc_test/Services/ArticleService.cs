@@ -1,61 +1,35 @@
-using dotnet_mvc_test.Data;
 using dotnet_mvc_test.Models.Entities;
-using Microsoft.EntityFrameworkCore;
+using dotnet_mvc_test.Repositories;
 
 namespace dotnet_mvc_test.Services
 {
     public class ArticleService : IArticleService
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IArticleRepository _repository;
 
-        public ArticleService(ApplicationDbContext context)
+        public ArticleService(IArticleRepository repository)
         {
-            _context = context;
+            _repository = repository;
         }
 
         public async Task<IEnumerable<Article>> GetAllArticlesAsync()
         {
-            return await _context.Articles
-                .Include(a => a.Author)
-                .Include(a => a.Category)
-                .Include(a => a.ArticleTags)
-                    .ThenInclude(at => at.Tag)
-                .OrderByDescending(a => a.CreatedAt)
-                .ToListAsync();
+            return await _repository.GetAllAsync();
         }
 
         public async Task<IEnumerable<Article>> GetPublishedArticlesAsync()
         {
-            return await _context.Articles
-                .Include(a => a.Author)
-                .Include(a => a.Category)
-                .Include(a => a.ArticleTags)
-                    .ThenInclude(at => at.Tag)
-                .Where(a => a.IsPublished && a.PublishedAt <= DateTime.UtcNow)
-                .OrderByDescending(a => a.PublishedAt)
-                .ToListAsync();
+            return await _repository.GetPublishedAsync();
         }
 
         public async Task<Article?> GetArticleByIdAsync(int id)
         {
-            return await _context.Articles
-                .Include(a => a.Author)
-                .Include(a => a.Category)
-                .Include(a => a.ArticleTags)
-                    .ThenInclude(at => at.Tag)
-                .Include(a => a.Comments)
-                .FirstOrDefaultAsync(a => a.Id == id);
+            return await _repository.GetByIdAsync(id);
         }
 
         public async Task<Article?> GetArticleBySlugAsync(string slug)
         {
-            return await _context.Articles
-                .Include(a => a.Author)
-                .Include(a => a.Category)
-                .Include(a => a.ArticleTags)
-                    .ThenInclude(at => at.Tag)
-                .Include(a => a.Comments.Where(c => c.IsApproved))
-                .FirstOrDefaultAsync(a => a.Slug == slug && a.IsPublished);
+            return await _repository.GetBySlugAsync(slug);
         }
 
         public async Task<Article> CreateArticleAsync(Article article)
@@ -68,16 +42,12 @@ namespace dotnet_mvc_test.Services
                 article.PublishedAt = DateTime.UtcNow;
             }
 
-            _context.Articles.Add(article);
-            await _context.SaveChangesAsync();
-            return article;
+            return await _repository.AddAsync(article);
         }
 
         public async Task<bool> UpdateArticleAsync(Article article)
         {
-            var existingArticle = await _context.Articles
-                .Include(a => a.ArticleTags)
-                .FirstOrDefaultAsync(a => a.Id == article.Id);
+            var existingArticle = await _repository.GetByIdAsync(article.Id);
 
             if (existingArticle == null)
                 return false;
@@ -107,44 +77,22 @@ namespace dotnet_mvc_test.Services
                 }
             }
 
-            _context.Articles.Update(existingArticle);
-            await _context.SaveChangesAsync();
-            return true;
+            return await _repository.UpdateAsync(existingArticle);
         }
 
         public async Task<bool> DeleteArticleAsync(int id)
         {
-            var article = await _context.Articles.FindAsync(id);
-            if (article == null)
-                return false;
-
-            _context.Articles.Remove(article);
-            await _context.SaveChangesAsync();
-            return true;
+            return await _repository.DeleteAsync(id);
         }
 
         public async Task<IEnumerable<Article>> GetArticlesByCategoryAsync(int categoryId)
         {
-            return await _context.Articles
-                .Include(a => a.Author)
-                .Include(a => a.Category)
-                .Include(a => a.ArticleTags)
-                    .ThenInclude(at => at.Tag)
-                .Where(a => a.CategoryId == categoryId && a.IsPublished)
-                .OrderByDescending(a => a.PublishedAt)
-                .ToListAsync();
+            return await _repository.GetByCategoryIdAsync(categoryId);
         }
 
         public async Task<IEnumerable<Article>> GetArticlesByTagAsync(int tagId)
         {
-            return await _context.Articles
-                .Include(a => a.Author)
-                .Include(a => a.Category)
-                .Include(a => a.ArticleTags)
-                    .ThenInclude(at => at.Tag)
-                .Where(a => a.ArticleTags.Any(at => at.TagId == tagId) && a.IsPublished)
-                .OrderByDescending(a => a.PublishedAt)
-                .ToListAsync();
+            return await _repository.GetByTagIdAsync(tagId);
         }
 
         public async Task<IEnumerable<Article>> SearchArticlesAsync(string keyword)
@@ -152,28 +100,12 @@ namespace dotnet_mvc_test.Services
             if (string.IsNullOrWhiteSpace(keyword))
                 return Enumerable.Empty<Article>();
 
-            return await _context.Articles
-                .Include(a => a.Author)
-                .Include(a => a.Category)
-                .Include(a => a.ArticleTags)
-                    .ThenInclude(at => at.Tag)
-                .Where(a => a.IsPublished && 
-                    (a.Title.Contains(keyword) || 
-                     a.Content.Contains(keyword) ||
-                     (a.Excerpt != null && a.Excerpt.Contains(keyword))))
-                .OrderByDescending(a => a.PublishedAt)
-                .ToListAsync();
+            return await _repository.SearchAsync(keyword);
         }
 
         public async Task<bool> IsSlugUniqueAsync(string slug, int? articleId = null)
         {
-            if (articleId.HasValue)
-            {
-                return !await _context.Articles
-                    .AnyAsync(a => a.Slug == slug && a.Id != articleId.Value);
-            }
-            
-            return !await _context.Articles.AnyAsync(a => a.Slug == slug);
+            return await _repository.IsSlugUniqueAsync(slug, articleId);
         }
     }
 }

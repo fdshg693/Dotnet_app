@@ -1,61 +1,40 @@
-using dotnet_mvc_test.Data;
 using dotnet_mvc_test.Models.Entities;
-using Microsoft.EntityFrameworkCore;
+using dotnet_mvc_test.Repositories;
 
 namespace dotnet_mvc_test.Services
 {
     public class CategoryService : ICategoryService
     {
-        private readonly ApplicationDbContext _context;
+        private readonly ICategoryRepository _repository;
 
-        public CategoryService(ApplicationDbContext context)
+        public CategoryService(ICategoryRepository repository)
         {
-            _context = context;
+            _repository = repository;
         }
 
         public async Task<IEnumerable<Category>> GetAllCategoriesAsync()
         {
-            return await _context.Categories
-                .OrderBy(c => c.Name)
-                .ToListAsync();
+            return await _repository.GetAllAsync();
         }
 
         public async Task<Category?> GetCategoryByIdAsync(int id)
         {
-            return await _context.Categories.FindAsync(id);
+            return await _repository.GetByIdAsync(id);
         }
 
         public async Task<Category> CreateCategoryAsync(Category category)
         {
-            _context.Categories.Add(category);
-            await _context.SaveChangesAsync();
-            return category;
+            return await _repository.AddAsync(category);
         }
 
         public async Task<bool> UpdateCategoryAsync(Category category)
         {
-            var existingCategory = await _context.Categories.FindAsync(category.Id);
-            if (existingCategory == null)
-                return false;
-
-            existingCategory.Name = category.Name;
-            existingCategory.Slug = category.Slug;
-            existingCategory.Description = category.Description;
-
-            _context.Categories.Update(existingCategory);
-            await _context.SaveChangesAsync();
-            return true;
+            return await _repository.UpdateAsync(category);
         }
 
         public async Task<bool> DeleteCategoryAsync(int id)
         {
-            var category = await _context.Categories.FindAsync(id);
-            if (category == null)
-                return false;
-
-            _context.Categories.Remove(category);
-            await _context.SaveChangesAsync();
-            return true;
+            return await _repository.DeleteAsync(id);
         }
     }
 }
