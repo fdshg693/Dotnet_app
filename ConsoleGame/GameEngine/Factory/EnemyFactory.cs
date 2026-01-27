@@ -1,8 +1,5 @@
 ﻿using GameEngine.Interfaces;
 using GameEngine.Models;
-using YamlDotNet.Serialization;
-
-
 namespace GameEngine.Factory
 {
     public class EnemySpec
@@ -35,58 +32,11 @@ namespace GameEngine.Factory
         /// <exception cref="InvalidOperationException">YAML解析に失敗した場合</exception>
         private static Dictionary<string, EnemySpec> LoadEnemySpecs(string yamlPath)
         {
-            try
-            {
-                // ファイル存在チェック
-                if (!File.Exists(yamlPath))
-                {
-                    throw new FileNotFoundException(
-                        $"Enemy specs file not found at: {yamlPath}. " +
-                        $"Please ensure the file exists in the application directory.");
-                }
-
-                // YAMLファイル読み込み
-                string yaml = File.ReadAllText(yamlPath);
-                
-                if (string.IsNullOrWhiteSpace(yaml))
-                {
-                    throw new InvalidOperationException(
-                        $"Enemy specs file is empty: {yamlPath}");
-                }
-
-                // YAML解析
-                var deserializer = new DeserializerBuilder().Build();
-                var specs = deserializer.Deserialize<Dictionary<string, EnemySpec>>(yaml);
-
-                if (specs == null || specs.Count == 0)
-                {
-                    throw new InvalidOperationException(
-                        $"No enemy specs found in file: {yamlPath}");
-                }
-
-                // 各仕様の妥当性チェック
-                foreach (var kvp in specs)
-                {
-                    ValidateEnemySpec(kvp.Key, kvp.Value);
-                }
-
-                Console.WriteLine($"Successfully loaded {specs.Count} enemy specs from {yamlPath}");
-                return specs;
-            }
-            catch (FileNotFoundException)
-            {
-                throw;
-            }
-            catch (YamlDotNet.Core.YamlException yamlEx)
-            {
-                throw new InvalidOperationException(
-                    $"Failed to parse YAML file: {yamlPath}. Error: {yamlEx.Message}", yamlEx);
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException(
-                    $"Unexpected error loading enemy specs from {yamlPath}: {ex.Message}", ex);
-            }
+            return YamlSpecLoader.Load(
+                yamlPath,
+                specLabelTitle: "Enemy",
+                validate: ValidateEnemySpec,
+                comparer: StringComparer.Ordinal);
         }
 
         /// <summary>

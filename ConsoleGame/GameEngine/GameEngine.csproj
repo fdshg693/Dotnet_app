@@ -10,6 +10,7 @@
   <ItemGroup>
     <None Remove="enemy-specs.yml" />
     <None Remove="game-config.yml" />
+    <None Remove="weapon-specs.yml" />
   </ItemGroup>
 
   <ItemGroup>
@@ -17,6 +18,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="game-config.yml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="weapon-specs.yml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
