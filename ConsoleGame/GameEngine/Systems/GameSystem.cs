@@ -2,6 +2,7 @@ using GameEngine.Interfaces;
 using GameEngine.Manager;
 using GameEngine.Configuration;
 using GameEngine.Models;
+using GameEngine.Systems.StateMachine;
 
 namespace GameEngine.Systems
 {
@@ -55,121 +56,15 @@ namespace GameEngine.Systems
         /// </summary>
         public void RunGameLoop()
         {
-            Console.WriteLine("\n=== Game Start ===");
-            _player.ShowInfo();
+            var context = new GameFlowContext(
+                _player,
+                _eventManager,
+                _input,
+                _saveDataManager,
+                RenderMessages);
 
-            while (_player.IsAlive)
-            {
-                Console.WriteLine("\n--- New Encounter ---");
-                
-                var eventResult = _eventManager.TriggerRandomEvent();
-                RenderMessages(eventResult.Messages);
-                bool continueGame = eventResult.ContinueGame;
-
-                if (!continueGame || !_player.IsAlive)
-                {
-                    break;
-                }
-
-                // プレイヤー情報の表示
-                _player.ShowInfo();
-
-                // 続行確認（オプション）
-                if (!ConfirmContinue())
-                {
-                    Console.WriteLine("\nGame ended by player choice.");
-                    break;
-                }
-            }
-
-            DisplayGameOver();
-        }
-
-        /// <summary>
-        /// 続行確認（継続・停止・一時保存）
-        /// </summary>
-        /// <returns>
-        /// ゲームを続行する場合はtrue、終了する場合はfalse
-        /// </returns>
-        private bool ConfirmContinue()
-        {
-            string action = UserInteraction.SelectGameAction();
-
-            switch (action)
-            {
-                case "continue":
-                    return true;
-
-                case "save_continue":
-                    SaveGameAsync().Wait();
-                    return true;
-
-                case "save_quit":
-                    SaveGameAsync().Wait();
-                    return false;
-
-                case "quit":
-                    Console.WriteLine("\nゲームを終了します。");
-                    return false;
-
-                default:
-                    Console.WriteLine("\n無効な選択です。ゲームを続行します。");
-                    return true;
-            }
-        }
-
-        /// <summary>
-        /// ゲームデータを保存する
-        /// </summary>
-        private async Task SaveGameAsync()
-        {
-            if (_saveDataManager == null)
-            {
-                Console.WriteLine("\n✗ セーブ機能が利用できません。");
-                Console.WriteLine("  MongoDBへの接続を確認してください。");
-                return;
-            }
-
-            try
-            {
-                var saveData = _player.GetSaveData("auto_save");
-                bool success = await _saveDataManager.SavePlayerDataAsync(_player, "auto_save");
-                
-                if (success)
-                {
-                    Console.WriteLine("✓ ゲームデータを保存しました。");
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"\n✗ セーブに失敗しました: {ex.Message}");
-            }
-        }
-
-        /// <summary>
-        /// ゲームオーバー画面を表示
-        /// </summary>
-        private void DisplayGameOver()
-        {
-            Console.WriteLine("\n===========================================");
-            
-            if (_player.IsAlive)
-            {
-                Console.WriteLine("       Thank you for playing!");
-            }
-            else
-            {
-                Console.WriteLine("            GAME OVER");
-            }
-            
-            Console.WriteLine("===========================================");
-            
-            _player.ShowInfo();
-            RenderMessages(GameRecord.GetRecordMessages());
-            
-            Console.WriteLine("\nFinal Stats:");
-            Console.WriteLine($"  Gold Earned: {_player.ReturnTotalGold()}");
-            Console.WriteLine($"  Potions Remaining: {_player.ReturnTotalPotions()}");
+            var stateMachine = new GameStateMachine(new StartState(), context);
+            stateMachine.Run();
         }
 
         private void OnMessagePublished(GameMessage message)
