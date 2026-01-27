@@ -1,18 +1,42 @@
 ﻿using GameEngine.Interfaces;
+using GameEngine.Models;
 
 namespace GameEngine.Systems
 {
     public static class RestSystem
     {
-        public static void UsePotion(IPlayer player)
+        public static List<GameMessage> ProcessRestAction(IPlayer player, UseItemAction? action)
         {
-            Console.WriteLine("You can Use Potion!");
-            Console.WriteLine($"Your Potion: {player.ReturnTotalPotions()}");
-            int? potionAmount = UserInteraction.ReadPositiveInteger("Enter the amount of Potuion you want to use: ");
-            if (potionAmount != null)
+            if (player == null)
+                throw new ArgumentNullException(nameof(player));
+
+            var messages = new List<GameMessage>();
+
+            if (action == null)
             {
-                player.UsePotion(potionAmount.Value);
+                return messages;
             }
+
+            if (!PlayerActionValidator.IsValid(action, out var errorMessage))
+            {
+                messages.Add(GameStateMapper.CreateMessage($"Invalid rest action: {errorMessage}", MessageType.Warning));
+                return messages;
+            }
+
+            if (!string.Equals(action.ItemName, "Potion", StringComparison.OrdinalIgnoreCase))
+            {
+                messages.Add(GameStateMapper.CreateMessage("Only Potion can be used during rest.", MessageType.Warning));
+                return messages;
+            }
+
+            if (player.ReturnTotalPotions() < action.Quantity)
+            {
+                messages.Add(GameStateMapper.CreateMessage("Not enough potions!", MessageType.Warning));
+                return messages;
+            }
+
+            player.UsePotion(action.Quantity);
+            return messages;
         }
     }
 }

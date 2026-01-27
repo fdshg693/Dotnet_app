@@ -151,13 +151,13 @@
 
             return choice.Value - 1;
         }
-        public static string SelectAttackStrategy()
+        public static string SelectAttackStrategy(IReadOnlyList<string>? attackStrategies = null)
         {
             //Player's turn
-            //Choose attack strategy                
-            var AttackStrategyArray = new string[] { "Default", "Melee", "Magic" };
-            var StrategyIndex = 0;
-            Console.WriteLine($"Selected Attack Strategy: {AttackStrategyArray[StrategyIndex]}");
+            //Choose attack strategy
+            var strategyList = attackStrategies ?? new List<string> { "Default", "Melee", "Magic" };
+            var strategyIndex = 0;
+            Console.WriteLine($"Selected Attack Strategy: {strategyList[strategyIndex]}");
 
             while (true)
             {
@@ -169,13 +169,13 @@
                     {
                         // カーソルを 1 行上に移動（\x1b[1A）して、その行をクリア（\x1b[2K）
 
-                        StrategyIndex = (StrategyIndex - 1 + AttackStrategyArray.Length) % AttackStrategyArray.Length;
-                        Console.WriteLine($"Selected Attack Strategy: {AttackStrategyArray[StrategyIndex]}");
+                        strategyIndex = (strategyIndex - 1 + strategyList.Count) % strategyList.Count;
+                        Console.WriteLine($"Selected Attack Strategy: {strategyList[strategyIndex]}");
                     }
                     else if (keyInfo.Key == ConsoleKey.RightArrow)
                     {
-                        StrategyIndex = (StrategyIndex + 1) % AttackStrategyArray.Length;
-                        Console.WriteLine($"Selected Attack Strategy: {AttackStrategyArray[StrategyIndex]}");
+                        strategyIndex = (strategyIndex + 1) % strategyList.Count;
+                        Console.WriteLine($"Selected Attack Strategy: {strategyList[strategyIndex]}");
                     }
                     else if (keyInfo.Key == ConsoleKey.Enter)
                     {
@@ -183,7 +183,7 @@
                     }
                 }
             }
-            return AttackStrategyArray[StrategyIndex];
+            return strategyList[strategyIndex];
 
         }
 

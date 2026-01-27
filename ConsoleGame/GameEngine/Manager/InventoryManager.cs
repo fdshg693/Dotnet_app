@@ -18,12 +18,12 @@ namespace GameEngine.Manager
         {
             Weapon = newWeapon;
             EquipmentChanged?.Invoke();
-            Console.WriteLine($"You equipped a {newWeapon.Name}");
+            GameMessageBus.Publish($"You equipped a {newWeapon.Name}", MessageType.Info);
         }
         public void GainGold(int amount)
         {
-            Console.WriteLine($"You gain {amount} gold");
             TotalGold += amount;
+            GameMessageBus.Publish($"You gain {amount} gold", MessageType.Gold);
         }
         public void BuyPotion(int amount)
         {
@@ -31,11 +31,11 @@ namespace GameEngine.Manager
             {
                 TotalGold -= amount * GameConstants.PotionPrice;
                 TotalPotions += amount;
-                Console.WriteLine($"You bought {amount} potions");
+                GameMessageBus.Publish($"You bought {amount} potions", MessageType.Success);
             }
             else
             {
-                Console.WriteLine("Not enough gold!");
+                GameMessageBus.Publish("Not enough gold!", MessageType.Warning);
 
             }
         }
@@ -44,11 +44,11 @@ namespace GameEngine.Manager
             if (TotalPotions >= amount)
             {
                 TotalPotions -= amount;
-                Console.WriteLine($"You used {amount} potions");
+                GameMessageBus.Publish($"You used {amount} potions", MessageType.Info);
             }
             else
             {
-                Console.WriteLine("Not enough potions!");
+                GameMessageBus.Publish("Not enough potions!", MessageType.Warning);
             }
         }
         public int ReturnTotalPotions()
@@ -61,9 +61,9 @@ namespace GameEngine.Manager
         }
         public void ShowInfo()
         {
-            Console.WriteLine($"Total Gold: {TotalGold}");
-            Console.WriteLine($"Total Potions: {TotalPotions}");
-            Console.WriteLine($"Equipped Weapon: {Weapon.Name}");
+            GameMessageBus.Publish($"Total Gold: {TotalGold}", MessageType.Info);
+            GameMessageBus.Publish($"Total Potions: {TotalPotions}", MessageType.Info);
+            GameMessageBus.Publish($"Equipped Weapon: {Weapon.Name}", MessageType.Info);
         }
     }
 }

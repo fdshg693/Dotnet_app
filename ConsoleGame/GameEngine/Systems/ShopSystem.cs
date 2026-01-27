@@ -1,64 +1,77 @@
-﻿using GameEngine.Factory;
+﻿using GameEngine.Constants;
+using GameEngine.Factory;
 using GameEngine.Interfaces;
+using GameEngine.Models;
 
 namespace GameEngine.Systems
 {
     public static class ShopSystem
     {
-        public static void Shop(IPlayer player)
+        public static ShopState CreateShopState()
         {
-            Console.WriteLine("-------------------------------------------------------------------");
-            Console.WriteLine("Welcome to the shop!");
-            Console.WriteLine("1. Buy Item");
-            Console.WriteLine("2. Buy Weapon");
-            Console.WriteLine("3. Exit Shop");
-            Console.WriteLine("-------------------------------------------------------------------");
-            Console.WriteLine($"Your Potion: {player.ReturnTotalPotions()}");
-            Console.WriteLine($"Your Gold: {player.ReturnTotalGold()}");
-            Console.WriteLine("-------------------------------------------------------------------");
-            while (true)
+            var shopState = GameStateMapper.CreateInitialShopState(GameConstants.PotionPrice);
+            shopState.AvailableWeapons = new List<WeaponInfo>
             {
-                var keyInfo = Console.ReadKey(intercept: true);
-                if (keyInfo.Key == ConsoleKey.D1)
-                {
-                    int? potionAmount = UserInteraction.ReadPositiveInteger("Enter the amount of Potuion you want to buy: ");
-                    if (potionAmount != null)
+                WeaponFactory.CreateWeapon("SWORD").ToWeaponInfo(),
+                WeaponFactory.CreateWeapon("AXE").ToWeaponInfo(),
+                WeaponFactory.CreateWeapon("BOW").ToWeaponInfo()
+            };
+
+            return shopState;
+        }
+
+        public static List<GameMessage> ProcessShopAction(IPlayer player, ShopAction action)
+        {
+            if (player == null)
+                throw new ArgumentNullException(nameof(player));
+            if (action == null)
+                throw new ArgumentNullException(nameof(action));
+
+            var messages = new List<GameMessage>();
+
+            if (!PlayerActionValidator.IsValid(action, out var errorMessage))
+            {
+                messages.Add(GameStateMapper.CreateMessage($"Invalid shop action: {errorMessage}", MessageType.Warning));
+                return messages;
+            }
+
+            switch (action.ShopType)
+            {
+                case ShopActionType.BuyPotion:
+                    int totalCost = action.Quantity * GameConstants.PotionPrice;
+                    if (player.ReturnTotalGold() < totalCost)
                     {
-                        player.BuyPotion(potionAmount.Value);
+                        messages.Add(GameStateMapper.CreateMessage("Not enough gold!", MessageType.Warning));
+                        return messages;
                     }
-                    break;
-                }
-                else if (keyInfo.Key == ConsoleKey.D2)
-                {
-                    Console.WriteLine("-------------------------------------------------------------------");
-                    Console.WriteLine("Choose Weapon");
-                    Console.WriteLine("1. SWORD");
-                    Console.WriteLine("2. AXE");
-                    Console.WriteLine("3. BOW");
-                    Console.WriteLine("-------------------------------------------------------------------");
-                    keyInfo = Console.ReadKey(intercept: true);
-                    if (keyInfo.Key == ConsoleKey.D1)
+
+                    player.BuyPotion(action.Quantity);
+                    return messages;
+
+                case ShopActionType.BuyWeapon:
+                    if (string.IsNullOrWhiteSpace(action.ItemName))
                     {
-                        player.EquipWeapon(WeaponFactory.CreateWeapon("SWORD"));
+                        messages.Add(GameStateMapper.CreateMessage("Weapon name is required.", MessageType.Warning));
+                        return messages;
                     }
-                    else if (keyInfo.Key == ConsoleKey.D2)
+
+                    try
                     {
-                        player.EquipWeapon(WeaponFactory.CreateWeapon("AXE"));
+                        player.EquipWeapon(WeaponFactory.CreateWeapon(action.ItemName));
                     }
-                    else if (keyInfo.Key == ConsoleKey.D3)
+                    catch (Exception ex)
                     {
-                        player.EquipWeapon(WeaponFactory.CreateWeapon("BOW"));
+                        messages.Add(GameStateMapper.CreateMessage($"Failed to equip weapon: {ex.Message}", MessageType.Error));
                     }
-                    else
-                    {
-                        Console.WriteLine("Invalid choice.");
-                    }
-                    break;
-                }
-                else if (keyInfo.Key == ConsoleKey.D3)
-                {
-                    break;
-                }
+                    return messages;
+
+                case ShopActionType.Exit:
+                    messages.Add(GameStateMapper.CreateMessage("You left the shop.", MessageType.Info));
+                    return messages;
+
+                default:
+                    messages.Add(GameStateMapper.CreateMessage("Unknown shop action.", MessageType.Error));
+                    return messages;
             }
         }
     }

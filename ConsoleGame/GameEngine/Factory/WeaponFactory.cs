@@ -23,7 +23,7 @@ namespace GameEngine.Factory
 
         private static Dictionary<string, WeaponSpec> LoadWeaponSpecs(string yamlPath)
         {
-            return YamlSpecLoader.Load(
+            return YamlSpecLoader.Load<WeaponSpec>(
                 yamlPath,
                 specLabelTitle: "Weapon",
                 validate: ValidateWeaponSpec,

@@ -35,6 +35,36 @@ namespace GameEngine.Models
         }
 
         /// <summary>
+        /// IPlayerからPlayerStateへの変換
+        /// </summary>
+        public static PlayerState ToPlayerState(this IPlayer player)
+        {
+            if (player == null)
+                throw new ArgumentNullException(nameof(player));
+
+            var saveData = player.GetSaveData();
+            var equippedWeapon = saveData.EquippedWeapon;
+            int attackPower = saveData.BaseAP + (equippedWeapon?.AP ?? 0);
+            int defensePower = saveData.BaseDP + (equippedWeapon?.DP ?? 0);
+            int maxHp = saveData.MaxHP;
+
+            return new PlayerState
+            {
+                Name = player.Name,
+                HP = player.HP,
+                MaxHP = maxHp,
+                Level = saveData.Level,
+                Experience = saveData.TotalExperience,
+                Gold = player.ReturnTotalGold(),
+                Potions = player.ReturnTotalPotions(),
+                EquippedWeapon = equippedWeapon?.Name,
+                IsAlive = player.IsAlive,
+                AttackPower = attackPower,
+                DefensePower = defensePower
+            };
+        }
+
+        /// <summary>
         /// IEnemyからEnemyStateへの変換
         /// </summary>
         public static EnemyState ToEnemyState(this IEnemy enemy)
@@ -46,9 +76,9 @@ namespace GameEngine.Models
             {
                 Name = enemy.Name,
                 HP = enemy.HP,
-                MaxHP = enemy.HP, // Note: 敵の初期HPを保存するにはIEnemyにMaxHPプロパティの追加が必要
+                MaxHP = enemy.MaxHP,
                 IsAlive = enemy.IsAlive,
-                AttackStrategy = enemy._attackStrategy?.GetAttackStrategyName() ?? "Unknown"
+                AttackStrategy = enemy.AttackStrategy?.GetAttackStrategyName() ?? "Unknown"
             };
         }
 

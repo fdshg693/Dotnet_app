@@ -1,4 +1,6 @@
-﻿namespace GameEngine.Systems
+﻿using GameEngine.Models;
+
+namespace GameEngine.Systems
 {
     public static class GameRecord
     {
@@ -13,12 +15,13 @@
         {
             TotalLosses++;
         }
-        public static void ShowRecord()
+        public static List<GameMessage> GetRecordMessages()
         {
-            Console.WriteLine($"Total Wins: {TotalWins}");
-            Console.WriteLine($"Total Losses: {TotalLosses}");
-            Console.WriteLine($"Total Games: {TotalGames}");
-            Console.WriteLine($"Win Rate: {(TotalGames == 0 ? 0 : (double)TotalWins / TotalGames * 100):F2}%");
+            return GameStateMapper.CreateMessages(
+                ($"Total Wins: {TotalWins}", MessageType.Info),
+                ($"Total Losses: {TotalLosses}", MessageType.Info),
+                ($"Total Games: {TotalGames}", MessageType.Info),
+                ($"Win Rate: {(TotalGames == 0 ? 0 : (double)TotalWins / TotalGames * 100):F2}%", MessageType.Info));
         }
     }
 }

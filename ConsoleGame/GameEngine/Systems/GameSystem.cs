@@ -1,6 +1,7 @@
 using GameEngine.Interfaces;
 using GameEngine.Manager;
 using GameEngine.Configuration;
+using GameEngine.Models;
 
 namespace GameEngine.Systems
 {
@@ -11,12 +12,16 @@ namespace GameEngine.Systems
     {
         private readonly IPlayer _player;
         private readonly EventManager _eventManager;
+        private readonly IGameInput _input;
         private readonly SaveDataManager? _saveDataManager;
 
-        public GameSystem(IPlayer player)
+        public GameSystem(IPlayer player, IGameInput input)
         {
             _player = player ?? throw new ArgumentNullException(nameof(player));
-            _eventManager = new EventManager(_player);
+            _input = input ?? throw new ArgumentNullException(nameof(input));
+            _eventManager = new EventManager(_player, _input);
+
+            GameMessageBus.MessagePublished += OnMessagePublished;
             
             // SaveDataManagerの初期化（MongoDBが利用できない場合はnull）
             try
@@ -41,7 +46,8 @@ namespace GameEngine.Systems
         /// </summary>
         public void Encounter(IPlayer player)
         {
-            _eventManager.TriggerRandomEvent();
+            var result = _eventManager.TriggerRandomEvent();
+            RenderMessages(result.Messages);
         }
 
         /// <summary>
@@ -56,7 +62,9 @@ namespace GameEngine.Systems
             {
                 Console.WriteLine("\n--- New Encounter ---");
                 
-                bool continueGame = _eventManager.TriggerRandomEvent();
+                var eventResult = _eventManager.TriggerRandomEvent();
+                RenderMessages(eventResult.Messages);
+                bool continueGame = eventResult.ContinueGame;
 
                 if (!continueGame || !_player.IsAlive)
                 {
@@ -157,11 +165,24 @@ namespace GameEngine.Systems
             Console.WriteLine("===========================================");
             
             _player.ShowInfo();
-            GameRecord.ShowRecord();
+            RenderMessages(GameRecord.GetRecordMessages());
             
             Console.WriteLine("\nFinal Stats:");
             Console.WriteLine($"  Gold Earned: {_player.ReturnTotalGold()}");
             Console.WriteLine($"  Potions Remaining: {_player.ReturnTotalPotions()}");
+        }
+
+        private void OnMessagePublished(GameMessage message)
+        {
+            RenderMessages(new[] { message });
+        }
+
+        private static void RenderMessages(IEnumerable<GameMessage> messages)
+        {
+            foreach (var message in messages)
+            {
+                Console.WriteLine(message.Text);
+            }
         }
     }
 }

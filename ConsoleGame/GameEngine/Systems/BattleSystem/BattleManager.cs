@@ -1,5 +1,7 @@
 using GameEngine.Factory;
 using GameEngine.Interfaces;
+using GameEngine.Models;
+using GameEngine.Systems;
 
 namespace GameEngine.Systems.BattleSystem
 {
@@ -9,10 +11,12 @@ namespace GameEngine.Systems.BattleSystem
     public class BattleManager
     {
         private readonly IPlayer _player;
+        private readonly IGameInput _input;
 
-        public BattleManager(IPlayer player)
+        public BattleManager(IPlayer player, IGameInput input)
         {
             _player = player ?? throw new ArgumentNullException(nameof(player));
+            _input = input ?? throw new ArgumentNullException(nameof(input));
         }
 
         /// <summary>
@@ -20,125 +24,133 @@ namespace GameEngine.Systems.BattleSystem
         /// </summary>
         public BattleResult StartBattle()
         {
+            var messages = new List<GameMessage>();
             try
             {
                 IEnemy enemy = EnemyFactory.CreateRandomEnemy();
-                Console.WriteLine($"A wild {enemy.Name} appears!\n");
+                messages.Add(GameStateMapper.CreateMessage($"A wild {enemy.Name} appears!", MessageType.Combat));
 
-                return ExecuteBattle(enemy);
+                return ExecuteBattle(enemy, messages);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error starting battle: {ex.Message}");
-                return new BattleResult(BattleOutcome.Error, null);
+                messages.Add(GameStateMapper.CreateMessage($"Error starting battle: {ex.Message}", MessageType.Error));
+                return new BattleResult(BattleOutcome.Error, null, messages);
             }
         }
 
         /// <summary>
         /// 指定された敵との戦闘を実行する
         /// </summary>
-        private BattleResult ExecuteBattle(IEnemy enemy)
+        private BattleResult ExecuteBattle(IEnemy enemy, List<GameMessage> messages)
         {
             var battleTurn = 0;
 
             while (_player.IsAlive && enemy.IsAlive)
             {
                 battleTurn++;
-                Console.WriteLine($"\n--- Turn {battleTurn} ---");
+            messages.Add(GameStateMapper.CreateMessage($"--- Turn {battleTurn} ---", MessageType.System));
 
                 // プレイヤーのターン
-                ExecutePlayerTurn(enemy);
+            ExecutePlayerTurn(enemy, battleTurn, messages);
 
                 // 敵が倒された場合
                 if (!enemy.IsAlive)
                 {
-                    return HandleVictory(enemy);
+                    return HandleVictory(enemy, messages);
                 }
 
                 // 敵のターン
-                ExecuteEnemyTurn(enemy);
+                ExecuteEnemyTurn(enemy, messages);
 
                 // プレイヤーが倒された場合
                 if (!_player.IsAlive)
                 {
-                    return HandleDefeat(enemy);
+                    return HandleDefeat(enemy, messages);
                 }
 
                 // ターン終了時の状態表示
-                DisplayBattleStatus(enemy);
+                DisplayBattleStatus(enemy, messages);
             }
 
             // 通常はここには到達しない
-            return new BattleResult(BattleOutcome.Error, enemy);
+            return new BattleResult(BattleOutcome.Error, enemy, messages);
         }
 
         /// <summary>
         /// プレイヤーのターンを実行
         /// </summary>
-        private void ExecutePlayerTurn(IEnemy enemy)
+        private void ExecutePlayerTurn(IEnemy enemy, int battleTurn, List<GameMessage> messages)
         {
+            var battleState = new BattleState
+            {
+                TurnNumber = battleTurn,
+                AvailableStrategies = new List<string> { "Default", "Melee", "Magic" }
+            };
+            var playerState = _player.ToPlayerState();
+            var enemyState = enemy.ToEnemyState();
+
             // 攻撃戦略をプレイヤーに選択させる
-            var attackStrategyName = UserInteraction.SelectAttackStrategy();
+            var attackAction = _input.SelectAttackAction(battleState, playerState, enemyState);
+            if (!PlayerActionValidator.IsValid(attackAction, out var errorMessage))
+            {
+                messages.Add(GameStateMapper.CreateMessage($"Invalid action: {errorMessage}", MessageType.Warning));
+                attackAction = new AttackAction("Default");
+            }
+
+            var attackStrategyName = attackAction.StrategyName;
             _player.ChangeAttackStrategy(attackStrategyName);
 
             // 攻撃実行
-            int enemyHPBefore = enemy.HP;
             _player.Attack(enemy);
-            int damageDealt = enemyHPBefore - enemy.HP;
-
-            Console.WriteLine($"{_player.Name} attacks {enemy.Name} with {attackStrategyName}!");
-            Console.WriteLine($"Dealt {damageDealt} damage!");
-            Console.WriteLine("-------------------------------------------------------------------");
+            messages.Add(GameStateMapper.CreateMessage($"{_player.Name} attacks {enemy.Name} with {attackStrategyName}!", MessageType.Combat));
+            messages.Add(GameStateMapper.CreateMessage("-------------------------------------------------------------------", MessageType.System));
         }
 
         /// <summary>
         /// 敵のターンを実行
         /// </summary>
-        private void ExecuteEnemyTurn(IEnemy enemy)
+        private void ExecuteEnemyTurn(IEnemy enemy, List<GameMessage> messages)
         {
-            int playerHPBefore = _player.HP;
             enemy.Attack(_player);
-            int damageReceived = playerHPBefore - _player.HP;
-
-            Console.WriteLine($"{enemy.Name} attacks {_player.Name} with {enemy._attackStrategy.GetAttackStrategyName()}!");
-            Console.WriteLine($"Received {damageReceived} damage!");
-            Console.WriteLine("-------------------------------------------------------------------");
+            messages.Add(GameStateMapper.CreateMessage($"{enemy.Name} attacks {_player.Name} with {enemy.AttackStrategy.GetAttackStrategyName()}!", MessageType.Combat));
+            messages.Add(GameStateMapper.CreateMessage("-------------------------------------------------------------------", MessageType.System));
         }
 
         /// <summary>
         /// 戦闘状態を表示
         /// </summary>
-        private void DisplayBattleStatus(IEnemy enemy)
+        private void DisplayBattleStatus(IEnemy enemy, List<GameMessage> messages)
         {
-            Console.WriteLine($"\nStatus:");
-            Console.WriteLine($"  {_player.Name}: {_player.HP} HP");
-            Console.WriteLine($"  {enemy.Name}: {enemy.HP} HP");
+            messages.Add(GameStateMapper.CreateMessage("Status:", MessageType.Info));
+            messages.Add(GameStateMapper.CreateMessage($"  {_player.Name}: {_player.HP} HP", MessageType.Info));
+            messages.Add(GameStateMapper.CreateMessage($"  {enemy.Name}: {enemy.HP} HP", MessageType.Info));
         }
 
         /// <summary>
         /// 勝利時の処理
         /// </summary>
-        private BattleResult HandleVictory(IEnemy enemy)
+        private BattleResult HandleVictory(IEnemy enemy, List<GameMessage> messages)
         {
-            Console.WriteLine($"\n{enemy.Name} has been defeated!");
+            messages.Add(GameStateMapper.CreateMessage($"{enemy.Name} has been defeated!", MessageType.Success));
             GameRecord.RecordWin();
-            GameRecord.ShowRecord();
+            messages.AddRange(GameRecord.GetRecordMessages());
             
             _player.DefeatEnemy(enemy);
             
-            return new BattleResult(BattleOutcome.Victory, enemy);
+            return new BattleResult(BattleOutcome.Victory, enemy, messages);
         }
 
         /// <summary>
         /// 敗北時の処理
         /// </summary>
-        private BattleResult HandleDefeat(IEnemy enemy)
+        private BattleResult HandleDefeat(IEnemy enemy, List<GameMessage> messages)
         {
-            Console.WriteLine($"\n{_player.Name} has fallen...");
+            messages.Add(GameStateMapper.CreateMessage($"{_player.Name} has fallen...", MessageType.Error));
             GameRecord.RecordLoss();
-            GameRecord.ShowRecord();
+            messages.AddRange(GameRecord.GetRecordMessages());
             
-            return new BattleResult(BattleOutcome.Defeat, enemy);
+            return new BattleResult(BattleOutcome.Defeat, enemy, messages);
         }
     }
 
@@ -149,11 +161,13 @@ namespace GameEngine.Systems.BattleSystem
     {
         public BattleOutcome Outcome { get; }
         public IEnemy? Enemy { get; }
+        public IReadOnlyList<GameMessage> Messages { get; }
 
-        public BattleResult(BattleOutcome outcome, IEnemy? enemy)
+        public BattleResult(BattleOutcome outcome, IEnemy? enemy, IReadOnlyList<GameMessage> messages)
         {
             Outcome = outcome;
             Enemy = enemy;
+            Messages = messages ?? Array.Empty<GameMessage>();
         }
 
         public bool IsVictory => Outcome == BattleOutcome.Victory;

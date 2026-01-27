@@ -87,14 +87,13 @@ namespace GameEngine.Manager
             if (enemy == null)
                 throw new ArgumentNullException(nameof(enemy));
 
-            Console.WriteLine($"You defeated {enemy.Name}!");
+            GameMessageBus.Publish($"You defeated {enemy.Name}!", MessageType.Combat);
 
             // ゴールド獲得
-            _inventory.GainGold(enemy.Gold);
-            Console.WriteLine($"Gained {enemy.Gold} gold!");
+            _inventory.GainGold(enemy.YieldGold);
 
             // 経験値獲得とレベルアップチェック
-            int levelsGained = _experience.GainExperience(enemy.Experience);
+            int levelsGained = _experience.GainExperience(enemy.YieldExperience);
             
             if (levelsGained > 0)
             {
@@ -116,7 +115,7 @@ namespace GameEngine.Manager
                 _increaseBaseAP(GameConstants.LevelUpAPIncrease);
             }
 
-            Console.WriteLine($"Leveled up {levels} time(s)!");
+            GameMessageBus.Publish($"Leveled up {levels} time(s)!", MessageType.Experience);
         }
     }
 }

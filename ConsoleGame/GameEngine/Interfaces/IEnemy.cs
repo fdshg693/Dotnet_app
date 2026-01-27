@@ -2,8 +2,9 @@
 {
     public interface IEnemy : ICharacter
     {
-        int Experience { get; }
-        int Gold { get; }
-        IAttackStrategy _attackStrategy { get; }
+        int YieldExperience { get; }
+        int YieldGold { get; }
+        int MaxHP { get; }
+        IAttackStrategy AttackStrategy { get; }
     }
 }

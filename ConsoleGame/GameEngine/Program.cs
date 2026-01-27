@@ -31,7 +31,8 @@ namespace CliRpgGame
                 IPlayer player = CreatePlayer(playerName);
                 
                 // ゲームシステムの初期化
-                var gameSystem = new GameSystem(player);
+                var gameInput = new ConsoleGameInput();
+                var gameSystem = new GameSystem(player, gameInput);
 
                 // ゲームループの実行
                 gameSystem.RunGameLoop();

@@ -1,4 +1,5 @@
 ﻿using GameEngine.Constants;
+using GameEngine.Models;
 
 namespace GameEngine.Manager
 {
@@ -13,21 +14,21 @@ namespace GameEngine.Manager
         /// <returns>LevelUp</returns>
         public int GainExperience(int amount)
         {
-            Console.WriteLine($"You gain {amount} experience");
             TotalExperience += amount;
+            GameMessageBus.Publish($"You gain {amount} experience", MessageType.Experience);
             if (TotalExperience >= GameConstants.ExperienceRequiredForLevelUp)
             {
                 Level++;
                 TotalExperience -= GameConstants.ExperienceRequiredForLevelUp;
-                Console.WriteLine($"Levele UP to level {Level}!");
+                GameMessageBus.Publish($"Level UP to level {Level}!", MessageType.Experience);
                 return 1;
             }
             return 0;
         }
         public void ShowInfo()
         {
-            Console.WriteLine($"Total Experience: {TotalExperience}");
-            Console.WriteLine($"Level: {Level}");
+            GameMessageBus.Publish($"Total Experience: {TotalExperience}", MessageType.Info);
+            GameMessageBus.Publish($"Level: {Level}", MessageType.Info);
         }
     }
 }

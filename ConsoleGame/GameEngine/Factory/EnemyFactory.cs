@@ -32,7 +32,7 @@ namespace GameEngine.Factory
         /// <exception cref="InvalidOperationException">YAML解析に失敗した場合</exception>
         private static Dictionary<string, EnemySpec> LoadEnemySpecs(string yamlPath)
         {
-            return YamlSpecLoader.Load(
+            return YamlSpecLoader.Load<EnemySpec>(
                 yamlPath,
                 specLabelTitle: "Enemy",
                 validate: ValidateEnemySpec,

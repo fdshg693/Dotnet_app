@@ -1,5 +1,6 @@
 using GameEngine.Configuration;
 using GameEngine.Interfaces;
+using GameEngine.Models;
 using GameEngine.Systems.BattleSystem;
 
 namespace GameEngine.Systems
@@ -11,13 +12,15 @@ namespace GameEngine.Systems
     {
         private readonly IPlayer _player;
         private readonly BattleManager _battleManager;
+        private readonly IGameInput _input;
         private readonly Random _random;
         private readonly GameConfig _config;
 
-        public EventManager(IPlayer player)
+        public EventManager(IPlayer player, IGameInput input)
         {
             _player = player ?? throw new ArgumentNullException(nameof(player));
-            _battleManager = new BattleManager(_player);
+            _input = input ?? throw new ArgumentNullException(nameof(input));
+            _battleManager = new BattleManager(_player, _input);
             _random = new Random();
             _config = GameConfigLoader.Instance;
         }
@@ -26,21 +29,22 @@ namespace GameEngine.Systems
         /// ランダムイベントを発生させる
         /// </summary>
         /// <returns>プレイヤーが生存している場合はtrue</returns>
-        public bool TriggerRandomEvent()
+        public EventResult TriggerRandomEvent()
         {
+            var messages = new List<GameMessage>();
             var eventType = DetermineEventType();
 
             switch (eventType)
             {
                 case GameEventType.Shop:
-                    return HandleShopEvent();
+                    return HandleShopEvent(messages);
 
                 case GameEventType.Battle:
-                    return HandleBattleEvent();
+                    return HandleBattleEvent(messages);
 
                 default:
-                    Console.WriteLine("Unknown event occurred.");
-                    return _player.IsAlive;
+                    messages.Add(GameStateMapper.CreateMessage("Unknown event occurred.", MessageType.Error));
+                    return new EventResult(_player.IsAlive, messages);
             }
         }
 
@@ -65,9 +69,9 @@ namespace GameEngine.Systems
         /// <summary>
         /// ショップイベントを処理する
         /// </summary>
-        private bool HandleShopEvent()
+        private EventResult HandleShopEvent(List<GameMessage> messages)
         {
-            Console.WriteLine("\n=== You found a shop! ===\n");
+            messages.Add(GameStateMapper.CreateMessage("=== You found a shop! ===", MessageType.System));
             
             // ゴールド報酬を付与
             int goldReward = _random.Next(
@@ -75,36 +79,57 @@ namespace GameEngine.Systems
                 _config.Shop.GoldRewardMax + 1);
             
             _player.GainGold(goldReward);
-            Console.WriteLine($"You received {goldReward} gold as a discovery bonus!");
+            messages.Add(GameStateMapper.CreateMessage($"You received {goldReward} gold as a discovery bonus!", MessageType.Gold));
 
             // ショップを開く
-            ShopSystem.Shop(_player);
+            var shopState = ShopSystem.CreateShopState();
+            var playerState = _player.ToPlayerState();
+            var shopAction = _input.SelectShopAction(shopState, playerState);
+            messages.AddRange(ShopSystem.ProcessShopAction(_player, shopAction));
 
             // 状態表示
-            Console.WriteLine($"\nStatus - {_player.Name}: {_player.HP} HP");
+            messages.Add(GameStateMapper.CreateMessage($"Status - {_player.Name}: {_player.HP} HP", MessageType.Info));
 
             // 回復アイテム使用の機会を提供
-            RestSystem.UsePotion(_player);
+            var restAction = _input.SelectRestAction(_player.ToPlayerState());
+            messages.AddRange(RestSystem.ProcessRestAction(_player, restAction));
 
-            return _player.IsAlive;
+            return new EventResult(_player.IsAlive, messages);
         }
 
         /// <summary>
         /// 戦闘イベントを処理する
         /// </summary>
-        private bool HandleBattleEvent()
+        private EventResult HandleBattleEvent(List<GameMessage> messages)
         {
-            Console.WriteLine("\n=== You encounter a wild enemy! ===\n");
+            messages.Add(GameStateMapper.CreateMessage("=== You encounter a wild enemy! ===", MessageType.System));
 
             var battleResult = _battleManager.StartBattle();
+            messages.AddRange(battleResult.Messages);
 
             // 戦闘後の回復アイテム使用
             if (_player.IsAlive)
             {
-                RestSystem.UsePotion(_player);
+                var restAction = _input.SelectRestAction(_player.ToPlayerState());
+                messages.AddRange(RestSystem.ProcessRestAction(_player, restAction));
             }
 
-            return _player.IsAlive;
+            return new EventResult(_player.IsAlive, messages);
+        }
+    }
+
+    /// <summary>
+    /// イベント結果
+    /// </summary>
+    public class EventResult
+    {
+        public bool ContinueGame { get; }
+        public IReadOnlyList<GameMessage> Messages { get; }
+
+        public EventResult(bool continueGame, IReadOnlyList<GameMessage> messages)
+        {
+            ContinueGame = continueGame;
+            Messages = messages ?? Array.Empty<GameMessage>();
         }
     }
 

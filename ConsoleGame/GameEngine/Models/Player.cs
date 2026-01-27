@@ -1,6 +1,7 @@
 using GameEngine.Constants;
 using GameEngine.Interfaces;
 using GameEngine.Manager;
+using GameEngine.Models;
 
 namespace GameEngine.Models
 {
@@ -93,7 +94,7 @@ namespace GameEngine.Models
                 throw new ArgumentException("Damage amount cannot be negative", nameof(amount));
 
             int actualDamage = _health.TakeDamage(amount);
-            Console.WriteLine($"{Name} takes {actualDamage} damage! Remaining HP: {HP}");
+            GameMessageBus.Publish($"{Name} takes {actualDamage} damage! Remaining HP: {HP}", MessageType.Combat);
         }
 
         public void ChangeAttackStrategy(string strategyName)
@@ -110,8 +111,8 @@ namespace GameEngine.Models
             if (amount <= 0)
                 throw new ArgumentException("Heal amount must be positive", nameof(amount));
 
-            Console.WriteLine($"You heal {amount} HP");
             _health.Heal(amount);
+            GameMessageBus.Publish($"{Name} heals {amount} HP", MessageType.Success);
         }
 
         public void UsePotion(int amount)
@@ -164,11 +165,11 @@ namespace GameEngine.Models
 
         public void ShowInfo()
         {
-            Console.WriteLine("-------------------------------------------------------------------");
-            Console.WriteLine($"Name: {Name}  HP: {HP}/{MaxHP}  AP: {AP}  DP: {DP}");
+            GameMessageBus.Publish("-------------------------------------------------------------------", MessageType.System);
+            GameMessageBus.Publish($"Name: {Name}  HP: {HP}/{MaxHP}  AP: {AP}  DP: {DP}", MessageType.Info);
             _inventory.ShowInfo();
             _experience.ShowInfo();
-            Console.WriteLine("-------------------------------------------------------------------");
+            GameMessageBus.Publish("-------------------------------------------------------------------", MessageType.System);
         }
 
         #endregion
